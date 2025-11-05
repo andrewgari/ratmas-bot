@@ -55,6 +55,7 @@ Slash commands register to the specified guild on startup.
 ## CI/CD Pipeline
 
 ### Branch Protection
+
 - Pull requests are required for `main` branch
 - All CI checks must pass before merging:
   - Linting (ESLint)
@@ -64,11 +65,13 @@ Slash commands register to the specified guild on startup.
   - Docker build test
 
 ### Automated Deployment
+
 - **On PR**: CI tests run, Docker build test performed
 - **On merge to main**: Docker image built and pushed to `ghcr.io/andrewgari/ratmas-bot:latest`
 - **On tag**: Versioned releases with semantic versioning
 
 ### Deployment
+
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment instructions.
 
 ## Notes

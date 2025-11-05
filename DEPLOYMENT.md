@@ -19,7 +19,7 @@ cp .env.example .env
 Edit `.env` with your actual values:
 
 - `DISCORD_TOKEN`: Your Discord bot token
-- `CLIENT_ID`: Discord application client ID  
+- `CLIENT_ID`: Discord application client ID
 - `GUILD_ID`: Your Discord server ID
 - `DATA_PATH`: Host path for persistent data (default: `./data`)
 
@@ -120,6 +120,7 @@ docker-compose logs --tail=50 ratmas-bot
 ### Automatic Updates (CI/CD)
 
 The CI/CD pipeline automatically builds and pushes new images when:
+
 - Code is pushed to `main` branch
 - New releases are tagged
 
@@ -138,6 +139,7 @@ docker-compose up -d --force-recreate
 ### Container Won't Start
 
 1. Check environment variables:
+
    ```bash
    docker-compose config
    ```
@@ -151,6 +153,7 @@ docker-compose up -d --force-recreate
 ### Database Issues
 
 1. Verify data directory permissions:
+
    ```bash
    ls -la ./data/
    ```
@@ -163,11 +166,13 @@ docker-compose up -d --force-recreate
 ### Performance Issues
 
 Monitor resource usage:
+
 ```bash
 docker stats ratmas-bot
 ```
 
 The container is limited to:
+
 - Memory: 512MB (limit), 256MB (reservation)
 - CPU: 0.5 cores (limit), 0.25 cores (reservation)
 
