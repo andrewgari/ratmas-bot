@@ -2,6 +2,7 @@
  * Main entry point for the application
  */
 export function main(): void {
+  // eslint-disable-next-line no-console
   console.log('Ratmas Bot - Starting...');
 }
 
