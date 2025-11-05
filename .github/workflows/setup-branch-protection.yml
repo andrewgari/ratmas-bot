@@ -1,22 +1,22 @@
 name: Setup Branch Protection
 
 on:
-  workflow_dispatch:  # Manual trigger
-  
+  workflow_dispatch: # Manual trigger
+
 jobs:
   setup-branch-protection:
     name: Setup Branch Protection Rules
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      
+
     steps:
       - name: Setup Branch Protection
         uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
-            
+
             try {
               await github.rest.repos.updateBranchProtection({
                 owner,

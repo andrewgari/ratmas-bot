@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       release_channel:
-        description: "Release channel"
+        description: 'Release channel'
         required: true
-        default: "staging"
+        default: 'staging'
         type: choice
         options:
           - staging
           - production
   push:
-    tags: ["v*"]
+    tags: ['v*']
 
 env:
   REGISTRY: ghcr.io
@@ -32,8 +32,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
           cache-dependency-path: ratmas-bot/package-lock.json
 
       - name: Build dist
@@ -88,8 +88,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
           cache-dependency-path: ratmas-bot/package-lock.json
 
       - name: Build dist
