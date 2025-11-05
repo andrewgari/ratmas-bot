@@ -1,0 +1,14 @@
+# Ignore files not in version control
+node_modules
+dist
+coverage
+
+# Ignore lock files
+package-lock.json
+
+# Ignore git files
+.git
+
+# Ignore local config
+.vscode
+.idea

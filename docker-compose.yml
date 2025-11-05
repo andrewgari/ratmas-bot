@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  ratmas-bot:
+    image: ghcr.io/andrewgari/ratmas-bot:latest
+    container_name: ratmas-bot
+    restart: unless-stopped
+
+    # Environment variables
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - TZ=${TZ:-UTC}
+      # Database path inside container
+      - DATABASE_PATH=/app/data/ratmas.sqlite
+
+    # Volume mappings
+    volumes:
+      # Persistent database storage
+      - ratmas_data:/app/data
+      # Optional: bind mount for development
+      # - ./data:/app/data
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+    # Health check
+    healthcheck:
+      test: ['CMD', 'node', '-e', 'process.exit(0)']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Logging configuration
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+# Named volumes for persistence
+volumes:
+  ratmas_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-./data}
