@@ -50,6 +50,14 @@ coverage/
 tmp/
 temp/
 
+# AI assistant temporary files, notes, and planning documents
+/temp/
+**/PLAN.md
+**/SUMMARY.md
+**/*-SUMMARY.md
+**/*_NOTES.md
+**/scratch.*
+
 # Database files (you may want to keep these in version control)
 # Uncomment the next lines if you want to ignore database files
 # *.sqlite
