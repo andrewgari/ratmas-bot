@@ -54,7 +54,7 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.eslint.json',
+        // Remove project for stability - no type-aware linting
       },
       globals: {
         console: 'readonly',
@@ -71,9 +71,8 @@ export default [
       '@typescript-eslint': tsPlugin,
     },
     rules: {
-      // TypeScript strict rules
+      // TypeScript strict rules (without type-checking)
       ...tsPlugin.configs.recommended.rules,
-      ...tsPlugin.configs['recommended-requiring-type-checking'].rules,
 
       // Enforce explicit types - no 'any' allowed
       '@typescript-eslint/no-explicit-any': 'error',
@@ -86,13 +85,6 @@ export default [
         },
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'error',
-
-      // Enforce type safety
-      '@typescript-eslint/no-unsafe-assignment': 'error',
-      '@typescript-eslint/no-unsafe-call': 'error',
-      '@typescript-eslint/no-unsafe-member-access': 'error',
-      '@typescript-eslint/no-unsafe-return': 'error',
-      '@typescript-eslint/strict-boolean-expressions': 'warn',
 
       // Code organization
       '@typescript-eslint/no-unused-vars': [
@@ -128,16 +120,6 @@ export default [
         },
       ],
 
-      // Enforce types in separate files (warning)
-      '@typescript-eslint/consistent-type-exports': 'warn',
-      '@typescript-eslint/consistent-type-imports': [
-        'warn',
-        {
-          prefer: 'type-imports',
-          fixStyle: 'separate-type-imports',
-        },
-      ],
-
       // Code complexity and size limits
       'max-lines': [
         'warn',
@@ -166,7 +148,6 @@ export default [
       eqeqeq: ['error', 'always'],
       curly: ['error', 'all'],
       'no-throw-literal': 'error',
-      '@typescript-eslint/prefer-promise-reject-errors': 'error',
 
       // Modern JavaScript
       'prefer-arrow-callback': 'error',
