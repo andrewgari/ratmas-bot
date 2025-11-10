@@ -25,18 +25,14 @@ describe('Application', () => {
     jest.clearAllMocks();
     // Set a test token
     process.env['DISCORD_TOKEN'] = 'test-token';
-    
+
     // Mock process.exit
-    mockExit = jest
-      .spyOn(process, 'exit')
-      .mockImplementation((code) => {
-        throw new Error(`process.exit called with ${code}`);
-      }) as jest.SpiedFunction<typeof process.exit>;
-    
+    mockExit = jest.spyOn(process, 'exit').mockImplementation((code) => {
+      throw new Error(`process.exit called with ${code}`);
+    }) as jest.SpiedFunction<typeof process.exit>;
+
     // Mock console.error to suppress error output
-    consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
