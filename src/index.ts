@@ -29,7 +29,7 @@ export function main(): void {
   // Event handler for messages
   client.on('messageCreate', (message) => {
     if (message.author.bot) return;
-    
+
     if (message.content === '!ping') {
       message.reply('Pong!');
     }
