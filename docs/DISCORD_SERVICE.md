@@ -92,7 +92,7 @@ if (userProfile) {
 ```typescript
 const result = await discordService.sendDirectMessage(
   'user-id',
-  'Hello! This is a DM from the bot.',
+  'Hello! This is a DM from the bot.'
 );
 
 if (result.success) {
@@ -116,10 +116,7 @@ roles.forEach((role) => {
 
 ```typescript
 // Simple text message
-const result = await discordService.sendTextMessage(
-  'channel-id',
-  'Hello from the bot!',
-);
+const result = await discordService.sendTextMessage('channel-id', 'Hello from the bot!');
 
 if (result.success) {
   console.log(`Message posted with ID: ${result.messageId}`);
@@ -147,25 +144,21 @@ const result = await discordService.sendEmbed('channel-id', {
 
 ```typescript
 // Message with both text and multiple embeds
-const result = await discordService.sendMessageWithEmbeds(
-  'channel-id',
-  'Daily Report:',
-  [
-    {
-      title: 'Statistics',
-      color: 0x0099ff,
-      fields: [
-        { name: 'New Members', value: '15', inline: true },
-        { name: 'Messages', value: '1,234', inline: true },
-      ],
-    },
-    {
-      title: 'Top Contributors',
-      color: 0xffaa00,
-      description: '1. User1\n2. User2\n3. User3',
-    },
-  ],
-);
+const result = await discordService.sendMessageWithEmbeds('channel-id', 'Daily Report:', [
+  {
+    title: 'Statistics',
+    color: 0x0099ff,
+    fields: [
+      { name: 'New Members', value: '15', inline: true },
+      { name: 'Messages', value: '1,234', inline: true },
+    ],
+  },
+  {
+    title: 'Top Contributors',
+    color: 0xffaa00,
+    description: '1. User1\n2. User2\n3. User3',
+  },
+]);
 ```
 
 ### Advanced Channel Message with Options
@@ -297,10 +290,7 @@ client.on('messageCreate', async (message) => {
 
   // Get member info command
   if (message.content === '!myinfo' && message.guildId) {
-    const memberInfo = await discordService.getGuildMember(
-      message.guildId,
-      message.author.id,
-    );
+    const memberInfo = await discordService.getGuildMember(message.guildId, message.author.id);
 
     if (memberInfo) {
       const roleNames = memberInfo.roles.map((r) => r.name).join(', ');
@@ -309,7 +299,7 @@ client.on('messageCreate', async (message) => {
           `Username: ${memberInfo.profile.username}\n` +
           `Nickname: ${memberInfo.nickname || 'None'}\n` +
           `Roles: ${roleNames}\n` +
-          `Joined: ${memberInfo.joinedAt?.toDateString() || 'Unknown'}`,
+          `Joined: ${memberInfo.joinedAt?.toDateString() || 'Unknown'}`
       );
     }
   }
@@ -329,7 +319,7 @@ client.on('messageCreate', async (message) => {
   // Announce command with embed
   if (message.content.startsWith('!announce ') && message.channelId) {
     const announcement = message.content.slice('!announce '.length);
-    
+
     const result = await discordService.sendEmbed(message.channelId, {
       title: '📢 Announcement',
       description: announcement,

@@ -1,10 +1,5 @@
 import { Client, EmbedBuilder, TextChannel } from 'discord.js';
-import {
-  MessageResult,
-  MessageOptions,
-  MessageEmbed,
-  DMResult,
-} from '../types/discord.types.js';
+import { MessageResult, MessageOptions, MessageEmbed, DMResult } from '../types/discord.types.js';
 
 /**
  * Message management service
@@ -32,8 +27,7 @@ export class MessageService {
       await user.send(message);
       return { success: true };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to send DM to user ${userId}:`, error);
       return {
         success: false,
@@ -50,7 +44,7 @@ export class MessageService {
    */
   async sendChannelMessage(
     channelId: string,
-    content: string | MessageOptions,
+    content: string | MessageOptions
   ): Promise<MessageResult> {
     try {
       const channel = await this.fetchTextChannel(channelId);
@@ -65,8 +59,7 @@ export class MessageService {
 
       return { success: true, messageId: message.id };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to send message to channel ${channelId}:`, error);
       return { success: false, error: errorMessage };
     }
@@ -78,10 +71,7 @@ export class MessageService {
    * @param message - The text message
    * @returns Result of the message send operation
    */
-  async sendTextMessage(
-    channelId: string,
-    message: string,
-  ): Promise<MessageResult> {
+  async sendTextMessage(channelId: string, message: string): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, message);
   }
 
@@ -91,10 +81,7 @@ export class MessageService {
    * @param embed - The embed to send
    * @returns Result of the message send operation
    */
-  async sendEmbed(
-    channelId: string,
-    embed: MessageEmbed,
-  ): Promise<MessageResult> {
+  async sendEmbed(channelId: string, embed: MessageEmbed): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, { embeds: [embed] });
   }
 
@@ -108,7 +95,7 @@ export class MessageService {
   async sendMessageWithEmbeds(
     channelId: string,
     content: string,
-    embeds: MessageEmbed[],
+    embeds: MessageEmbed[]
   ): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, { content, embeds });
   }

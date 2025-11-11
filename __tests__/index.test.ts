@@ -78,13 +78,6 @@ jest.unstable_mockModule('discord.js', () => ({
 
 const { main } = await import('../src/index.js');
 
-
-
-
-
-
-
-
 describe('Application', () => {
   let mockExit: jest.SpiedFunction<typeof process.exit>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;

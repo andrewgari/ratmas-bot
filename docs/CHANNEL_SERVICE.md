@@ -122,7 +122,7 @@ await channelService.setChannelPermissions(
   'channel-id',
   'role-id',
   ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
-  [],
+  []
 );
 
 // Deny a role from viewing a channel
@@ -130,7 +130,7 @@ await channelService.setChannelPermissions(
   'channel-id',
   'muted-role-id',
   [],
-  ['SendMessages', 'AddReactions'],
+  ['SendMessages', 'AddReactions']
 );
 
 // Mixed permissions
@@ -138,7 +138,7 @@ await channelService.setChannelPermissions(
   'channel-id',
   'mod-role-id',
   ['ViewChannel', 'SendMessages', 'ManageMessages', 'ReadMessageHistory'],
-  ['MentionEveryone'],
+  ['MentionEveryone']
 );
 ```
 
@@ -291,7 +291,7 @@ client.on('messageCreate', async (message) => {
       message.channelId,
       everyoneRole.id,
       [],
-      ['SendMessages'],
+      ['SendMessages']
     );
 
     if (result.success) {
@@ -308,7 +308,7 @@ client.on('messageCreate', async (message) => {
       message.channelId,
       everyoneRole.id,
       ['SendMessages'],
-      [],
+      []
     );
 
     if (result.success) {
@@ -351,10 +351,7 @@ Make sure your bot has these permissions:
 ### Create a Complete Server Structure
 
 ```typescript
-async function setupServerStructure(
-  guildId: string,
-  channelService: ChannelService,
-) {
+async function setupServerStructure(guildId: string, channelService: ChannelService) {
   // Create categories
   const textCategory = await channelService.createCategory(guildId, {
     name: '📝 TEXT CHANNELS',
@@ -401,7 +398,7 @@ async function createPrivateChannel(
   channelName: string,
   allowedRoleIds: string[],
   everyoneRoleId: string,
-  channelService: ChannelService,
+  channelService: ChannelService
 ) {
   const permissionOverwrites: ChannelPermissionOverwrite[] = [
     {

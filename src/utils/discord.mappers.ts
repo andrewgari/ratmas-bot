@@ -29,9 +29,7 @@ export function mapMemberToInfo(member: GuildMember): MemberInfo {
   return {
     profile: mapUserToProfile(member.user),
     nickname: member.nickname,
-    roles: Array.from(member.roles.cache.values()).map((role) =>
-      mapRoleToInfo(role),
-    ),
+    roles: Array.from(member.roles.cache.values()).map((role) => mapRoleToInfo(role)),
     joinedAt: member.joinedAt,
   };
 }

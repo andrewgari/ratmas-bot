@@ -26,16 +26,19 @@ src/
 **Purpose**: Manage users and guild members
 
 **Responsibilities**:
+
 - Query guild members with filtering options
 - Fetch specific member information
 - Retrieve user profiles
 
 **Methods**:
+
 - `getGuildMembers(guildId, options)` - Get all members, optionally filtered
 - `getGuildMember(guildId, userId)` - Get specific member info
 - `getUserProfile(userId)` - Get user profile
 
 **Example**:
+
 ```typescript
 const userService = new UserService(client);
 
@@ -56,11 +59,13 @@ const member = await userService.getGuildMember(guildId, userId);
 **Purpose**: Handle message sending to channels and users
 
 **Responsibilities**:
+
 - Send direct messages
 - Send channel messages (text and embeds)
 - Build and format embeds
 
 **Methods**:
+
 - `sendDirectMessage(userId, message)` - Send DM to user
 - `sendChannelMessage(channelId, content)` - Send message to channel
 - `sendTextMessage(channelId, message)` - Send simple text
@@ -68,6 +73,7 @@ const member = await userService.getGuildMember(guildId, userId);
 - `sendMessageWithEmbeds(channelId, content, embeds)` - Send text with embeds
 
 **Example**:
+
 ```typescript
 const messageService = new MessageService(client);
 
@@ -89,17 +95,20 @@ await messageService.sendEmbed(channelId, {
 **Purpose**: Create and manage Discord channels
 
 **Responsibilities**:
+
 - Create text channels and categories
 - Set channel permissions
 - Query categories
 
 **Methods**:
+
 - `createTextChannel(guildId, options)` - Create text channel
 - `createCategory(guildId, options)` - Create category
 - `setChannelPermissions(channelId, roleId, allow, deny)` - Set permissions
 - `getCategories(guildId)` - List all categories
 
 **Example**:
+
 ```typescript
 const channelService = new ChannelService(client);
 
@@ -112,11 +121,13 @@ const category = await channelService.createCategory(guildId, {
 await channelService.createTextChannel(guildId, {
   name: 'private-chat',
   categoryId: category.channelId,
-  permissionOverwrites: [{
-    id: roleId,
-    type: 'role',
-    allow: ['ViewChannel', 'SendMessages'],
-  }],
+  permissionOverwrites: [
+    {
+      id: roleId,
+      type: 'role',
+      allow: ['ViewChannel', 'SendMessages'],
+    },
+  ],
 });
 ```
 
@@ -127,14 +138,17 @@ await channelService.createTextChannel(guildId, {
 **Purpose**: Query and manage server roles
 
 **Responsibilities**:
+
 - List guild roles
 - Fetch specific role information
 
 **Methods**:
+
 - `getGuildRoles(guildId)` - Get all roles in guild
 - `getRole(guildId, roleId)` - Get specific role info
 
 **Example**:
+
 ```typescript
 const roleService = new RoleService(client);
 
@@ -154,11 +168,13 @@ const adminRole = await roleService.getRole(guildId, roleId);
 **Purpose**: Centralized data mapping between Discord.js objects and application interfaces
 
 **Functions**:
+
 - `mapUserToProfile(user)` - Convert User to UserProfile
 - `mapMemberToInfo(member)` - Convert GuildMember to MemberInfo
 - `mapRoleToInfo(role)` - Convert Role to RoleInfo
 
 **Benefits**:
+
 - Single source of truth for data transformations
 - Reusable across services
 - Easy to test and maintain
@@ -168,37 +184,47 @@ const adminRole = await roleService.getRole(guildId, roleId);
 ## Design Principles
 
 ### 1. Single Responsibility Principle (SRP)
+
 Each service has one clearly defined responsibility:
+
 - UserService → Users and members
 - MessageService → Messaging
 - ChannelService → Channels
 - RoleService → Roles
 
 ### 2. Dependency Injection
+
 All services receive the Discord client through constructor injection:
+
 ```typescript
 constructor(private client: Client) {}
 ```
 
 This makes services:
+
 - Easy to test (mock the client)
 - Loosely coupled
 - Flexible and reusable
 
 ### 3. Separation of Concerns
+
 - **Services**: Business logic and Discord API interactions
 - **Mappers**: Data transformation
 - **Types**: Type definitions
 - **Index**: Application initialization and command routing
 
 ### 4. Type Safety
+
 All services use TypeScript interfaces for:
+
 - Input parameters
 - Return types
 - Internal data structures
 
 ### 5. Error Handling
+
 Consistent error handling across services:
+
 - Try-catch blocks for async operations
 - Descriptive error messages
 - Graceful degradation
@@ -224,7 +250,7 @@ client.on('messageCreate', async (message) => {
       message.guildId,
       message.author.id
     );
-    
+
     await messageService.sendEmbed(message.channelId, {
       title: 'Member Info',
       description: `Username: ${member.profile.username}`,
@@ -238,26 +264,31 @@ client.on('messageCreate', async (message) => {
 ## Benefits of This Architecture
 
 ### 1. **Maintainability**
+
 - Each service is small and focused
 - Easy to locate and fix bugs
 - Clear ownership of features
 
 ### 2. **Testability**
+
 - Services can be tested in isolation
 - Mock dependencies easily
 - Unit tests are simpler
 
 ### 3. **Scalability**
+
 - Easy to add new services
 - Extend existing services without affecting others
 - Clear patterns to follow
 
 ### 4. **Readability**
+
 - Clear file and service names
 - Logical organization
 - Self-documenting structure
 
 ### 5. **Reusability**
+
 - Services can be used in different contexts
 - Mappers are shared utilities
 - Types are consistent across services
@@ -267,6 +298,7 @@ client.on('messageCreate', async (message) => {
 ## Migration from Old Architecture
 
 ### Before (Monolithic DiscordService):
+
 ```typescript
 import { DiscordService } from './services/discord.service.js';
 
@@ -277,6 +309,7 @@ await service.createTextChannel(guildId, options);
 ```
 
 ### After (Specialized Services):
+
 ```typescript
 import { UserService } from './services/user.service.js';
 import { MessageService } from './services/message.service.js';
@@ -323,12 +356,14 @@ async kickMember(guildId: string, userId: string): Promise<boolean> {
 ## Testing Strategy
 
 Each service should have:
+
 - Unit tests for each public method
 - Mock Discord client
 - Test error scenarios
 - Test data mapping
 
 Example test structure:
+
 ```typescript
 describe('UserService', () => {
   let userService: UserService;
@@ -356,6 +391,7 @@ describe('UserService', () => {
 ## Future Enhancements
 
 Potential additional services:
+
 - **GuildService**: Guild settings and configuration
 - **VoiceService**: Voice channel management
 - **ModerationService**: Moderation actions (ban, mute, etc.)

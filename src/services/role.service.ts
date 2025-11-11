@@ -40,10 +40,7 @@ export class RoleService {
       const role = await guild.roles.fetch(roleId);
       return role ? mapRoleToInfo(role) : null;
     } catch (error) {
-      console.error(
-        `Failed to fetch role ${roleId} from guild ${guildId}:`,
-        error,
-      );
+      console.error(`Failed to fetch role ${roleId} from guild ${guildId}:`, error);
       return null;
     }
   }

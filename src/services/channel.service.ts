@@ -26,10 +26,7 @@ export class ChannelService {
    * @param options - Category creation options
    * @returns Result with category ID
    */
-  async createCategory(
-    guildId: string,
-    options: CreateCategoryOptions,
-  ): Promise<ChannelResult> {
+  async createCategory(guildId: string, options: CreateCategoryOptions): Promise<ChannelResult> {
     try {
       const guild = await this.client.guilds.fetch(guildId);
       if (!guild) {
@@ -63,10 +60,7 @@ export class ChannelService {
    * @param options - Channel creation options
    * @returns Result with channel ID
    */
-  async createTextChannel(
-    guildId: string,
-    options: CreateChannelOptions,
-  ): Promise<ChannelResult> {
+  async createTextChannel(guildId: string, options: CreateChannelOptions): Promise<ChannelResult> {
     try {
       const guild = await this.client.guilds.fetch(guildId);
       if (!guild) {
@@ -110,7 +104,7 @@ export class ChannelService {
     channelId: string,
     roleId: string,
     allow: string[] = [],
-    deny: string[] = [],
+    deny: string[] = []
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const channel = await this.fetchChannelWithPermissions(channelId);
@@ -118,8 +112,7 @@ export class ChannelService {
       await channel.permissionOverwrites.edit(roleId, permissions);
       return { success: true };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to set channel permissions:`, error);
       return { success: false, error: errorMessage };
     }
@@ -137,9 +130,7 @@ export class ChannelService {
     }
 
     const channels = await guild.channels.fetch();
-    const categories = channels.filter(
-      (ch) => ch?.type === ChannelType.GuildCategory,
-    );
+    const categories = channels.filter((ch) => ch?.type === ChannelType.GuildCategory);
 
     return Array.from(categories.values()).map((cat) => ({
       id: cat!.id,
@@ -151,14 +142,9 @@ export class ChannelService {
   /**
    * Fetch channel and validate it supports permissions
    */
-  private async fetchChannelWithPermissions(
-    channelId: string,
-  ): Promise<{
+  private async fetchChannelWithPermissions(channelId: string): Promise<{
     permissionOverwrites: {
-      edit: (
-        roleId: string,
-        permissions: Record<string, boolean | null>,
-      ) => Promise<unknown>;
+      edit: (roleId: string, permissions: Record<string, boolean | null>) => Promise<unknown>;
     };
   }> {
     const channel = await this.client.channels.fetch(channelId);
@@ -176,10 +162,7 @@ export class ChannelService {
   /**
    * Build permissions object from allow/deny arrays
    */
-  private buildPermissions(
-    allow: string[],
-    deny: string[],
-  ): Record<string, boolean | null> {
+  private buildPermissions(allow: string[], deny: string[]): Record<string, boolean | null> {
     const permissions: Record<string, boolean | null> = {};
 
     for (const perm of allow) {
@@ -199,7 +182,7 @@ export class ChannelService {
    * Build permission overwrites from simplified format
    */
   private buildPermissionOverwrites(
-    overwrites: ChannelPermissionOverwrite[],
+    overwrites: ChannelPermissionOverwrite[]
   ): OverwriteResolvable[] {
     return overwrites.map((ow) => ({
       id: ow.id,
@@ -245,8 +228,7 @@ export class ChannelService {
    * Handle errors consistently
    */
   private handleError(error: unknown, operation: string): ChannelResult {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to ${operation}:`, error);
     return { success: false, error: errorMessage };
   }

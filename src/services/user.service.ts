@@ -1,9 +1,5 @@
 import { Client } from 'discord.js';
-import {
-  UserProfile,
-  MemberInfo,
-  MemberFilterOptions,
-} from '../types/discord.types.js';
+import { UserProfile, MemberInfo, MemberFilterOptions } from '../types/discord.types.js';
 import { mapUserToProfile, mapMemberToInfo } from '../utils/discord.mappers.js';
 
 /**
@@ -19,10 +15,7 @@ export class UserService {
    * @param options - Filter options (roleIds, excludeBots)
    * @returns Array of member information
    */
-  async getGuildMembers(
-    guildId: string,
-    options: MemberFilterOptions = {},
-  ): Promise<MemberInfo[]> {
+  async getGuildMembers(guildId: string, options: MemberFilterOptions = {}): Promise<MemberInfo[]> {
     const guild = await this.client.guilds.fetch(guildId);
     if (!guild) {
       throw new Error(`Guild with ID ${guildId} not found`);
@@ -40,7 +33,7 @@ export class UserService {
 
     if (options.roleIds && options.roleIds.length > 0) {
       filteredMembers = filteredMembers.filter((member) =>
-        options.roleIds!.some((roleId) => member.roles.cache.has(roleId)),
+        options.roleIds!.some((roleId) => member.roles.cache.has(roleId))
       );
     }
 
@@ -53,10 +46,7 @@ export class UserService {
    * @param userId - The user ID
    * @returns Member information
    */
-  async getGuildMember(
-    guildId: string,
-    userId: string,
-  ): Promise<MemberInfo | null> {
+  async getGuildMember(guildId: string, userId: string): Promise<MemberInfo | null> {
     try {
       const guild = await this.client.guilds.fetch(guildId);
       if (!guild) {
@@ -66,10 +56,7 @@ export class UserService {
       const member = await guild.members.fetch(userId);
       return member ? mapMemberToInfo(member) : null;
     } catch (error) {
-      console.error(
-        `Failed to fetch member ${userId} from guild ${guildId}:`,
-        error,
-      );
+      console.error(`Failed to fetch member ${userId} from guild ${guildId}:`, error);
       return null;
     }
   }

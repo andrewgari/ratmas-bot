@@ -74,7 +74,7 @@ async function handleCommands(
     messageService: MessageService;
     channelService: ChannelService;
     roleService: RoleService;
-  },
+  }
 ): Promise<void> {
   if (message.content === '!ping') {
     message.reply('Pong!');
@@ -105,22 +105,16 @@ async function handleCommands(
 /**
  * Handle the memberinfo command
  */
-async function handleMemberInfoCommand(
-  message: Message,
-  userService: UserService,
-): Promise<void> {
+async function handleMemberInfoCommand(message: Message, userService: UserService): Promise<void> {
   try {
-    const memberInfo = await userService.getGuildMember(
-      message.guildId!,
-      message.author.id,
-    );
+    const memberInfo = await userService.getGuildMember(message.guildId!, message.author.id);
     if (memberInfo) {
       const roleNames = memberInfo.roles.map((r) => r.name).join(', ');
       message.reply(
         `**${memberInfo.profile.username}**\n` +
           `Nickname: ${memberInfo.nickname || 'None'}\n` +
           `Roles: ${roleNames}\n` +
-          `Joined: ${memberInfo.joinedAt?.toDateString() || 'Unknown'}`,
+          `Joined: ${memberInfo.joinedAt?.toDateString() || 'Unknown'}`
       );
     }
   } catch {
@@ -133,7 +127,7 @@ async function handleMemberInfoCommand(
  */
 async function handleAnnounceCommand(
   message: Message,
-  messageService: MessageService,
+  messageService: MessageService
 ): Promise<void> {
   const result = await messageService.sendEmbed(message.channelId, {
     title: '📢 Announcement',
@@ -160,7 +154,7 @@ async function handleAnnounceCommand(
  */
 async function handleCreateChannelCommand(
   message: Message,
-  channelService: ChannelService,
+  channelService: ChannelService
 ): Promise<void> {
   if (!message.guildId) {
     message.reply('This command must be used in a guild!');
@@ -191,15 +185,10 @@ async function handleCreateChannelCommand(
       : undefined,
   };
 
-  const result = await channelService.createTextChannel(
-    message.guildId,
-    options,
-  );
+  const result = await channelService.createTextChannel(message.guildId, options);
 
   if (result.success) {
-    message.reply(
-      `Channel created: <#${result.channelId}> (${result.channelName})`,
-    );
+    message.reply(`Channel created: <#${result.channelId}> (${result.channelName})`);
   } else {
     message.reply(`Failed to create channel: ${result.error}`);
   }
@@ -208,10 +197,7 @@ async function handleCreateChannelCommand(
 /**
  * Handle the roles command
  */
-async function handleRolesCommand(
-  message: Message,
-  roleService: RoleService,
-): Promise<void> {
+async function handleRolesCommand(message: Message, roleService: RoleService): Promise<void> {
   try {
     const roles = await roleService.getGuildRoles(message.guildId!);
     const roleList = roles

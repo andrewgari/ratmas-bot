@@ -23,10 +23,7 @@ export class DiscordService {
    * @param options - Filter options (roleIds, excludeBots)
    * @returns Array of member information
    */
-  async getGuildMembers(
-    guildId: string,
-    options: MemberFilterOptions = {},
-  ): Promise<MemberInfo[]> {
+  async getGuildMembers(guildId: string, options: MemberFilterOptions = {}): Promise<MemberInfo[]> {
     const guild = await this.client.guilds.fetch(guildId);
     if (!guild) {
       throw new Error(`Guild with ID ${guildId} not found`);
@@ -44,7 +41,7 @@ export class DiscordService {
 
     if (options.roleIds && options.roleIds.length > 0) {
       filteredMembers = filteredMembers.filter((member) =>
-        options.roleIds!.some((roleId) => member.roles.cache.has(roleId)),
+        options.roleIds!.some((roleId) => member.roles.cache.has(roleId))
       );
     }
 
@@ -57,10 +54,7 @@ export class DiscordService {
    * @param userId - The user ID
    * @returns Member information
    */
-  async getGuildMember(
-    guildId: string,
-    userId: string,
-  ): Promise<MemberInfo | null> {
+  async getGuildMember(guildId: string, userId: string): Promise<MemberInfo | null> {
     try {
       const guild = await this.client.guilds.fetch(guildId);
       if (!guild) {
@@ -109,8 +103,7 @@ export class DiscordService {
       await user.send(message);
       return { success: true };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to send DM to user ${userId}:`, error);
       return {
         success: false,
@@ -142,7 +135,7 @@ export class DiscordService {
    */
   async sendChannelMessage(
     channelId: string,
-    content: string | MessageOptions,
+    content: string | MessageOptions
   ): Promise<MessageResult> {
     try {
       const channel = await this.fetchTextChannel(channelId);
@@ -157,8 +150,7 @@ export class DiscordService {
 
       return { success: true, messageId: message.id };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to send message to channel ${channelId}:`, error);
       return { success: false, error: errorMessage };
     }
@@ -229,10 +221,7 @@ export class DiscordService {
    * @param message - The text message
    * @returns Result of the message send operation
    */
-  async sendTextMessage(
-    channelId: string,
-    message: string,
-  ): Promise<MessageResult> {
+  async sendTextMessage(channelId: string, message: string): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, message);
   }
 
@@ -242,10 +231,7 @@ export class DiscordService {
    * @param embed - The embed to send
    * @returns Result of the message send operation
    */
-  async sendEmbed(
-    channelId: string,
-    embed: MessageEmbed,
-  ): Promise<MessageResult> {
+  async sendEmbed(channelId: string, embed: MessageEmbed): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, { embeds: [embed] });
   }
 
@@ -259,7 +245,7 @@ export class DiscordService {
   async sendMessageWithEmbeds(
     channelId: string,
     content: string,
-    embeds: MessageEmbed[],
+    embeds: MessageEmbed[]
   ): Promise<MessageResult> {
     return this.sendChannelMessage(channelId, { content, embeds });
   }
@@ -298,9 +284,7 @@ export class DiscordService {
     return {
       profile: this.mapUserToProfile(member.user),
       nickname: member.nickname,
-      roles: Array.from(member.roles.cache.values()).map((role) =>
-        this.mapRoleToInfo(role),
-      ),
+      roles: Array.from(member.roles.cache.values()).map((role) => this.mapRoleToInfo(role)),
       joinedAt: member.joinedAt,
     };
   }

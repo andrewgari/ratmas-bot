@@ -80,61 +80,66 @@ const roles = await roleService.getGuildRoles(guildId);
 
 ### DiscordService → UserService
 
-| Old Method | New Method | Service |
-|-----------|-----------|---------|
+| Old Method          | New Method          | Service     |
+| ------------------- | ------------------- | ----------- |
 | `getGuildMembers()` | `getGuildMembers()` | UserService |
-| `getGuildMember()` | `getGuildMember()` | UserService |
-| `getUserProfile()` | `getUserProfile()` | UserService |
+| `getGuildMember()`  | `getGuildMember()`  | UserService |
+| `getUserProfile()`  | `getUserProfile()`  | UserService |
 
 ### DiscordService → MessageService
 
-| Old Method | New Method | Service |
-|-----------|-----------|---------|
-| `sendDirectMessage()` | `sendDirectMessage()` | MessageService |
-| `sendChannelMessage()` | `sendChannelMessage()` | MessageService |
-| `sendTextMessage()` | `sendTextMessage()` | MessageService |
-| `sendEmbed()` | `sendEmbed()` | MessageService |
+| Old Method                | New Method                | Service        |
+| ------------------------- | ------------------------- | -------------- |
+| `sendDirectMessage()`     | `sendDirectMessage()`     | MessageService |
+| `sendChannelMessage()`    | `sendChannelMessage()`    | MessageService |
+| `sendTextMessage()`       | `sendTextMessage()`       | MessageService |
+| `sendEmbed()`             | `sendEmbed()`             | MessageService |
 | `sendMessageWithEmbeds()` | `sendMessageWithEmbeds()` | MessageService |
 
 ### DiscordService → RoleService
 
-| Old Method | New Method | Service |
-|-----------|-----------|---------|
-| `getGuildRoles()` | `getGuildRoles()` | RoleService |
-| N/A | `getRole()` | RoleService (new) |
+| Old Method        | New Method        | Service           |
+| ----------------- | ----------------- | ----------------- |
+| `getGuildRoles()` | `getGuildRoles()` | RoleService       |
+| N/A               | `getRole()`       | RoleService (new) |
 
 ### ChannelService (Already Separate)
 
-| Method | Service |
-|--------|---------|
-| `createTextChannel()` | ChannelService |
-| `createCategory()` | ChannelService |
+| Method                    | Service        |
+| ------------------------- | -------------- |
+| `createTextChannel()`     | ChannelService |
+| `createCategory()`        | ChannelService |
 | `setChannelPermissions()` | ChannelService |
-| `getCategories()` | ChannelService |
+| `getCategories()`         | ChannelService |
 
 ## Benefits
 
 ### 1. Better Organization
+
 - Clear separation of concerns
 - Easy to find functionality
 - Logical file structure
 
 ### 2. Easier Testing
+
 - Smaller, focused test files
 - Mock only what you need
 - Isolated test scenarios
 
 ### 3. Improved Maintainability
+
 - Changes are localized
 - Reduced risk of side effects
 - Clear ownership of features
 
 ### 4. Enhanced Scalability
+
 - Add new services easily
 - Extend existing services independently
 - Clear patterns to follow
 
 ### 5. Code Reusability
+
 - Shared mappers reduce duplication
 - Services can be composed
 - Utilities are centralized
@@ -144,11 +149,13 @@ const roles = await roleService.getGuildRoles(guildId);
 ### Imports
 
 **Old:**
+
 ```typescript
 import { DiscordService } from './services/discord.service.js';
 ```
 
 **New:**
+
 ```typescript
 import { UserService } from './services/user.service.js';
 import { MessageService } from './services/message.service.js';
@@ -159,11 +166,13 @@ import { ChannelService } from './services/channel.service.js';
 ### Service Instantiation
 
 **Old:**
+
 ```typescript
 const service = new DiscordService(client);
 ```
 
 **New:**
+
 ```typescript
 const userService = new UserService(client);
 const messageService = new MessageService(client);
@@ -174,6 +183,7 @@ const channelService = new ChannelService(client);
 ### Command Handler Pattern
 
 **Old:**
+
 ```typescript
 async function handleCommands(
   message: Message,
@@ -185,6 +195,7 @@ async function handleCommands(
 ```
 
 **New:**
+
 ```typescript
 async function handleCommands(
   message: Message,
@@ -220,7 +231,7 @@ export class DiscordService {
   async getGuildMembers(...args) {
     return this.userService.getGuildMembers(...args);
   }
-  
+
   // ... other delegating methods
 }
 ```
@@ -228,6 +239,7 @@ export class DiscordService {
 ## Testing Updates
 
 All existing tests still pass! The refactoring:
+
 - ✅ Maintains all functionality
 - ✅ Passes all existing tests
 - ✅ Compiles without errors
