@@ -29,9 +29,7 @@ export function calculateEventTiming(event: RatmasEvent): EventTiming {
     daysUntilPurchaseDeadline: Math.ceil(
       (purchaseDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     ),
-    daysUntilReveal: Math.ceil(
-      (revealDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    ),
+    daysUntilReveal: Math.ceil((revealDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
     currentDateInTimezone: now,
   };
 }
@@ -57,11 +55,7 @@ export async function syncParticipantsFromRole(
   let addedCount = 0;
 
   for (const member of members) {
-    const existing = findParticipantByUserId(
-      participants,
-      event.id,
-      member.profile.id
-    );
+    const existing = findParticipantByUserId(participants, event.id, member.profile.id);
     if (existing) continue;
 
     try {
@@ -89,9 +83,7 @@ export async function notifyAllPairings(
   messageService: MessageService
 ): Promise<number> {
   let notifiedCount = 0;
-  const eventPairings = Array.from(pairings.values()).filter(
-    (p) => p.eventId === event.id
-  );
+  const eventPairings = Array.from(pairings.values()).filter((p) => p.eventId === event.id);
 
   for (const pairing of eventPairings) {
     if (pairing.notifiedAt) continue;
@@ -103,10 +95,7 @@ export async function notifyAllPairings(
 
     const message = buildPairingNotificationMessage(event, santa, recipient);
 
-    const result = await messageService.sendDirectMessage(
-      santa.userId,
-      message
-    );
+    const result = await messageService.sendDirectMessage(santa.userId, message);
 
     if (result.success) {
       pairing.notifiedAt = new Date();
@@ -127,9 +116,7 @@ export function createPairings(
   shuffleFn: <T>(array: T[]) => T[]
 ): RatmasPairing[] {
   if (participants.length < 3) {
-    throw new Error(
-      `Need at least 3 participants, found ${participants.length}`
-    );
+    throw new Error(`Need at least 3 participants, found ${participants.length}`);
   }
 
   const shuffled = shuffleFn([...participants]);

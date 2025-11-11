@@ -1,8 +1,4 @@
-import {
-  RatmasEvent,
-  RatmasParticipant,
-  RatmasEventStatus,
-} from '../types/ratmas.types.js';
+import { RatmasEvent, RatmasParticipant, RatmasEventStatus } from '../types/ratmas.types.js';
 
 /**
  * Helper utilities for RatService
@@ -16,32 +12,21 @@ export function validateStatusTransition(
   newStatus: RatmasEventStatus
 ): void {
   const validTransitions: Record<RatmasEventStatus, RatmasEventStatus[]> = {
-    [RatmasEventStatus.OPEN]: [
-      RatmasEventStatus.LOCKED,
-      RatmasEventStatus.CANCELLED,
-    ],
+    [RatmasEventStatus.OPEN]: [RatmasEventStatus.LOCKED, RatmasEventStatus.CANCELLED],
     [RatmasEventStatus.LOCKED]: [
       RatmasEventStatus.MATCHED,
       RatmasEventStatus.OPEN,
       RatmasEventStatus.CANCELLED,
     ],
-    [RatmasEventStatus.MATCHED]: [
-      RatmasEventStatus.NOTIFIED,
-      RatmasEventStatus.CANCELLED,
-    ],
-    [RatmasEventStatus.NOTIFIED]: [
-      RatmasEventStatus.COMPLETED,
-      RatmasEventStatus.CANCELLED,
-    ],
+    [RatmasEventStatus.MATCHED]: [RatmasEventStatus.NOTIFIED, RatmasEventStatus.CANCELLED],
+    [RatmasEventStatus.NOTIFIED]: [RatmasEventStatus.COMPLETED, RatmasEventStatus.CANCELLED],
     [RatmasEventStatus.COMPLETED]: [],
     [RatmasEventStatus.CANCELLED]: [],
   };
 
   const allowed = validTransitions[currentStatus];
   if (!allowed.includes(newStatus)) {
-    throw new Error(
-      `Invalid status transition from ${currentStatus} to ${newStatus}`
-    );
+    throw new Error(`Invalid status transition from ${currentStatus} to ${newStatus}`);
   }
 }
 

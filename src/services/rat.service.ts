@@ -49,11 +49,7 @@ export class RatService {
   private participants: Map<string, RatmasParticipant> = new Map();
   private pairings: Map<string, RatmasPairing> = new Map();
 
-  constructor(
-    _client: Client,
-    userService: UserService,
-    messageService: MessageService
-  ) {
+  constructor(_client: Client, userService: UserService, messageService: MessageService) {
     this.userService = userService;
     this.messageService = messageService;
   }
@@ -63,9 +59,7 @@ export class RatService {
   async createEvent(options: CreateEventOptions): Promise<RatmasEvent> {
     const existingEvent = this.getActiveEvent(options.guildId);
     if (existingEvent) {
-      throw new Error(
-        `Guild already has active event (status: ${existingEvent.status})`
-      );
+      throw new Error(`Guild already has active event (status: ${existingEvent.status})`);
     }
 
     if (options.purchaseDeadline <= options.eventStartDate) {
@@ -112,10 +106,7 @@ export class RatService {
     return this.events.get(eventId) || null;
   }
 
-  async updateEventStatus(
-    eventId: string,
-    newStatus: RatmasEventStatus
-  ): Promise<RatmasEvent> {
+  async updateEventStatus(eventId: string, newStatus: RatmasEventStatus): Promise<RatmasEvent> {
     const event = this.events.get(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
@@ -144,9 +135,7 @@ export class RatService {
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
-      throw new Error(
-        `Cannot add participants to event with status: ${event.status}`
-      );
+      throw new Error(`Cannot add participants to event with status: ${event.status}`);
     }
 
     if (this.isParticipant(eventId, userId)) {
@@ -173,16 +162,10 @@ export class RatService {
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
-      throw new Error(
-        `Cannot remove participants from event with status: ${event.status}`
-      );
+      throw new Error(`Cannot remove participants from event with status: ${event.status}`);
     }
 
-    const participant = findParticipantByUserId(
-      this.participants,
-      eventId,
-      userId
-    );
+    const participant = findParticipantByUserId(this.participants, eventId, userId);
     if (!participant) {
       throw new Error(`User ${userId} is not a participant`);
     }
@@ -211,21 +194,14 @@ export class RatService {
   }
 
   getParticipants(eventId: string): RatmasParticipant[] {
-    return Array.from(this.participants.values()).filter(
-      (p) => p.eventId === eventId
-    );
+    return Array.from(this.participants.values()).filter((p) => p.eventId === eventId);
   }
 
   isParticipant(eventId: string, userId: string): boolean {
-    return (
-      findParticipantByUserId(this.participants, eventId, userId) !== null
-    );
+    return findParticipantByUserId(this.participants, eventId, userId) !== null;
   }
 
-  getParticipantByUserId(
-    eventId: string,
-    userId: string
-  ): RatmasParticipant | null {
+  getParticipantByUserId(eventId: string, userId: string): RatmasParticipant | null {
     return findParticipantByUserId(this.participants, eventId, userId);
   }
 
@@ -270,11 +246,7 @@ export class RatService {
   }
 
   getPairingForSanta(eventId: string, userId: string): RatmasPairing | null {
-    const participant = findParticipantByUserId(
-      this.participants,
-      eventId,
-      userId
-    );
+    const participant = findParticipantByUserId(this.participants, eventId, userId);
     if (!participant) return null;
 
     for (const pairing of this.pairings.values()) {
@@ -286,10 +258,7 @@ export class RatService {
     return null;
   }
 
-  getRecipientForSanta(
-    eventId: string,
-    userId: string
-  ): RatmasParticipant | null {
+  getRecipientForSanta(eventId: string, userId: string): RatmasParticipant | null {
     const pairing = this.getPairingForSanta(eventId, userId);
     if (!pairing) return null;
 
@@ -301,9 +270,7 @@ export class RatService {
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.MATCHED) {
-      throw new Error(
-        `Cannot notify pairings for event with status: ${event.status}`
-      );
+      throw new Error(`Cannot notify pairings for event with status: ${event.status}`);
     }
 
     const notifiedCount = await notifyAllPairings(
@@ -358,27 +325,15 @@ export class RatService {
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
-      throw new Error(
-        `Cannot sync participants for event with status: ${event.status}`
-      );
+      throw new Error(`Cannot sync participants for event with status: ${event.status}`);
     }
 
-    return syncFromRole(
-      event,
-      this.userService,
-      this.participants,
-      this.addParticipant.bind(this)
-    );
+    return syncFromRole(event, this.userService, this.participants, this.addParticipant.bind(this));
   }
 
   async hasRatmasRole(eventId: string, userId: string): Promise<boolean> {
     const event = this.events.get(eventId);
     if (!event) return false;
-    return validateUserHasRole(
-      this.userService,
-      event.guildId,
-      userId,
-      event.config.ratmasRoleId
-    );
+    return validateUserHasRole(this.userService, event.guildId, userId, event.config.ratmasRoleId);
   }
 }
