@@ -52,7 +52,7 @@ Call sites should `await` repository-backed methods that previously returned syn
 ## Configuration
 
 - `DATABASE_URL` controls the SQLite location (e.g. `file:./data/ratmas.sqlite`).
-- `DATABASE_PATH` remains available for compatibility with existing docker-compose templates; Prisma ignores it directly but the container wiring maps the same directory.
+- `DATABASE_PATH` is a legacy environment variable and is not used by Prisma. Remove it unless your deployment scripts rely on the value.
 - The `data/` directory is gitignored and created automatically by Prisma when the database is first accessed.
 
 ## Development Workflow
@@ -66,7 +66,7 @@ Call sites should `await` repository-backed methods that previously returned syn
 
 - Consumers of `RatService` can retain existing method calls; they simply need to handle asynchronous results.
 - Legacy data (if any) should be imported using Prisma scripts or `sqlite3` directly; no automatic migration from in-memory data exists.
-- Tests can point `DATABASE_URL` to `file:memory:?cache=shared` when isolation is required.
+- Tests can point `DATABASE_URL` to `file::memory:?cache=shared` when isolation is required.
 
 ## Data Location
 

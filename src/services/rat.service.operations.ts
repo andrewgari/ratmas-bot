@@ -49,9 +49,10 @@ export async function syncParticipantsFromRole(
   });
 
   let addedCount = 0;
+  const knownParticipantIds = new Set(participantUserIds);
 
   for (const member of members) {
-    if (participantUserIds.has(member.profile.id)) continue;
+    if (knownParticipantIds.has(member.profile.id)) continue;
 
     try {
       await addParticipantFn(
@@ -60,7 +61,7 @@ export async function syncParticipantsFromRole(
         member.nickname || member.profile.username
       );
       addedCount++;
-      participantUserIds.add(member.profile.id);
+      knownParticipantIds.add(member.profile.id);
     } catch (error) {
       console.error(`Failed to add participant ${member.profile.id}:`, error);
     }

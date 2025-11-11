@@ -94,7 +94,10 @@ export class RatService {
       throw new Error(`Cannot add participants to event with status: ${event.status}`);
     }
 
-    const existingParticipant = await this.repository.findParticipantByEventAndUser(eventId, userId);
+    const existingParticipant = await this.repository.findParticipantByEventAndUser(
+      eventId,
+      userId
+    );
     if (existingParticipant) {
       throw new Error(`User ${userId} is already a participant`);
     }
@@ -270,7 +273,12 @@ export class RatService {
     const participants = await this.repository.listParticipants(eventId);
     const participantUserIds = new Set(participants.map((participant) => participant.userId));
 
-    return syncFromRole(event, this.userService, participantUserIds, this.addParticipant.bind(this));
+    return syncFromRole(
+      event,
+      this.userService,
+      participantUserIds,
+      this.addParticipant.bind(this)
+    );
   }
 
   async hasRatmasRole(eventId: string, userId: string): Promise<boolean> {

@@ -14,6 +14,8 @@ const ACTIVE_STATUSES: RatmasEventStatus[] = [
   RatmasEventStatus.MATCHED,
   RatmasEventStatus.NOTIFIED,
 ];
+const ACTIVE_STATUS_STRINGS = ACTIVE_STATUSES.map((status) => status as string);
+const VALID_STATUS_VALUES = new Set<string>(Object.values(RatmasEventStatus));
 
 type PrismaRatmasEvent = Awaited<ReturnType<typeof prisma.ratmasEvent.create>>;
 type PrismaRatmasParticipant = Awaited<ReturnType<typeof prisma.ratmasParticipant.create>>;
@@ -48,7 +50,7 @@ export class RatmasRepository {
     const record = await this.client.ratmasEvent.findFirst({
       where: {
         guildId,
-        status: { in: ACTIVE_STATUSES },
+        status: { in: ACTIVE_STATUS_STRINGS },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -95,7 +97,10 @@ export class RatmasRepository {
     return records.map(mapPairing);
   }
 
-  async findPairingForSanta(eventId: string, santaParticipantId: string): Promise<RatmasPairing | null> {
+  async findPairingForSanta(
+    eventId: string,
+    santaParticipantId: string
+  ): Promise<RatmasPairing | null> {
     const record = await this.client.ratmasPairing.findFirst({
       where: {
         eventId,
@@ -148,7 +153,10 @@ export class RatmasRepository {
     return record ? mapParticipant(record) : null;
   }
 
-  async findParticipantByEventAndUser(eventId: string, userId: string): Promise<RatmasParticipant | null> {
+  async findParticipantByEventAndUser(
+    eventId: string,
+    userId: string
+  ): Promise<RatmasParticipant | null> {
     const record = await this.client.ratmasParticipant.findUnique({
       where: {
         eventId_userId: {
@@ -194,10 +202,11 @@ export class RatmasRepository {
 }
 
 function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
+  const status = validateStatus(record.status);
   return {
     id: record.id,
     guildId: record.guildId,
-    status: record.status as RatmasEventStatus,
+    status,
     config: {
       ratmasRoleId: record.ratmasRoleId,
       eventStartDate: record.eventStartDate,
@@ -233,4 +242,12 @@ function mapPairing(record: PrismaRatmasPairing): RatmasPairing {
     createdAt: record.createdAt,
     notifiedAt: record.notifiedAt ?? undefined,
   };
+}
+
+function validateStatus(status: string): RatmasEventStatus {
+  if (!VALID_STATUS_VALUES.has(status)) {
+    throw new Error(`Encountered unknown Ratmas event status: ${status}`);
+  }
+
+  return status as RatmasEventStatus;
 }
