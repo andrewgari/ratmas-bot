@@ -12,6 +12,7 @@ services:
     environment:
       - NODE_ENV=production
       - TZ=${TZ:-UTC}
+      - DATABASE_URL=file:/app/data/ratmas.sqlite
       # Database path inside container
       - DATABASE_PATH=/app/data/ratmas.sqlite
 

@@ -79,19 +79,3 @@ export function buildPairingNotificationMessage(
 
   return message;
 }
-
-/**
- * Find participant by user ID in a collection
- */
-export function findParticipantByUserId(
-  participants: Map<string, RatmasParticipant>,
-  eventId: string,
-  userId: string
-): RatmasParticipant | null {
-  for (const participant of participants.values()) {
-    if (participant.eventId === eventId && participant.userId === userId) {
-      return participant;
-    }
-  }
-  return null;
-}

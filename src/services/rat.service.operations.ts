@@ -1,4 +1,4 @@
-import {
+import type {
   RatmasEvent,
   RatmasParticipant,
   RatmasPairing,
@@ -6,11 +6,7 @@ import {
 } from '../types/ratmas.types.js';
 import { UserService } from './user.service.js';
 import { MessageService } from './message.service.js';
-import {
-  generateId,
-  buildPairingNotificationMessage,
-  findParticipantByUserId,
-} from './rat.service.helpers.js';
+import { generateId, buildPairingNotificationMessage } from './rat.service.helpers.js';
 
 /**
  * Extended operations for RatService
@@ -40,7 +36,7 @@ export function calculateEventTiming(event: RatmasEvent): EventTiming {
 export async function syncParticipantsFromRole(
   event: RatmasEvent,
   userService: UserService,
-  participants: Map<string, RatmasParticipant>,
+  participantUserIds: Set<string>,
   addParticipantFn: (
     eventId: string,
     userId: string,
@@ -53,10 +49,10 @@ export async function syncParticipantsFromRole(
   });
 
   let addedCount = 0;
+  const knownParticipantIds = new Set(participantUserIds);
 
   for (const member of members) {
-    const existing = findParticipantByUserId(participants, event.id, member.profile.id);
-    if (existing) continue;
+    if (knownParticipantIds.has(member.profile.id)) continue;
 
     try {
       await addParticipantFn(
@@ -65,6 +61,7 @@ export async function syncParticipantsFromRole(
         member.nickname || member.profile.username
       );
       addedCount++;
+      knownParticipantIds.add(member.profile.id);
     } catch (error) {
       console.error(`Failed to add participant ${member.profile.id}:`, error);
     }
@@ -78,33 +75,37 @@ export async function syncParticipantsFromRole(
  */
 export async function notifyAllPairings(
   event: RatmasEvent,
-  pairings: Map<string, RatmasPairing>,
-  participants: Map<string, RatmasParticipant>,
+  pairings: RatmasPairing[],
+  participants: RatmasParticipant[],
   messageService: MessageService
-): Promise<number> {
+): Promise<{
+  notifiedCount: number;
+  notifiedPairings: { pairingId: string; notifiedAt: Date }[];
+}> {
   let notifiedCount = 0;
-  const eventPairings = Array.from(pairings.values()).filter((p) => p.eventId === event.id);
+  const notifiedPairings: { pairingId: string; notifiedAt: Date }[] = [];
+  const participantMap = new Map(participants.map((participant) => [participant.id, participant]));
 
-  for (const pairing of eventPairings) {
+  for (const pairing of pairings) {
+    if (pairing.eventId !== event.id) continue;
     if (pairing.notifiedAt) continue;
 
-    const santa = participants.get(pairing.santaId);
-    const recipient = participants.get(pairing.recipientId);
+    const santa = participantMap.get(pairing.santaId);
+    const recipient = participantMap.get(pairing.recipientId);
 
     if (!santa || !recipient) continue;
 
     const message = buildPairingNotificationMessage(event, santa, recipient);
-
     const result = await messageService.sendDirectMessage(santa.userId, message);
 
     if (result.success) {
-      pairing.notifiedAt = new Date();
-      pairings.set(pairing.id, pairing);
+      const notifiedAt = new Date();
+      notifiedPairings.push({ pairingId: pairing.id, notifiedAt });
       notifiedCount++;
     }
   }
 
-  return notifiedCount;
+  return { notifiedCount, notifiedPairings };
 }
 
 /**

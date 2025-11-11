@@ -1,22 +1,17 @@
-import { Client } from 'discord.js';
-import {
+import type { Client } from 'discord.js';
+import type {
   RatmasEvent,
   RatmasParticipant,
   RatmasPairing,
-  RatmasEventStatus,
   CreateEventOptions,
   UpdateParticipantOptions,
   PairingResult,
   EventTiming,
 } from '../types/ratmas.types.js';
+import { RatmasEventStatus } from '../types/ratmas.types.js';
 import { UserService } from './user.service.js';
 import { MessageService } from './message.service.js';
-import {
-  validateStatusTransition,
-  shuffleArray,
-  generateId,
-  findParticipantByUserId,
-} from './rat.service.helpers.js';
+import { validateStatusTransition, shuffleArray } from './rat.service.helpers.js';
 import {
   calculateEventTiming,
   syncParticipantsFromRole as syncFromRole,
@@ -24,40 +19,31 @@ import {
   createPairings,
   validateUserHasRole,
 } from './rat.service.operations.js';
+import { RatmasRepository } from '../repositories/ratmas.repository.js';
 
 /**
- * RatService - Manages Ratmas (Secret Santa) event state
- *
- * Core responsibilities:
- * - Event lifecycle management (create, update status, cancel)
- * - Participant enrollment and management
- * - Secret santa pairing generation and assignment
- * - Time-based queries and validations
- * - Integration with Discord roles and DMs
- *
- * Key Concept - Ratmas Role:
- * Each event is associated with a Discord role ID (ratmasRoleId) that links
- * all participants together. Users with this role are considered participants
- * in the event and can be auto-enrolled via syncParticipantsFromRole().
+ * RatService - Manages Ratmas (Secret Santa) event state backed by persistent storage
  */
 export class RatService {
-  private userService: UserService;
-  private messageService: MessageService;
+  private readonly userService: UserService;
+  private readonly messageService: MessageService;
+  private readonly repository: RatmasRepository;
 
-  // In-memory storage (will be replaced with SQLite repository)
-  private events: Map<string, RatmasEvent> = new Map();
-  private participants: Map<string, RatmasParticipant> = new Map();
-  private pairings: Map<string, RatmasPairing> = new Map();
-
-  constructor(_client: Client, userService: UserService, messageService: MessageService) {
+  constructor(
+    _client: Client,
+    userService: UserService,
+    messageService: MessageService,
+    repository: RatmasRepository = new RatmasRepository()
+  ) {
     this.userService = userService;
     this.messageService = messageService;
+    this.repository = repository;
   }
 
   // ==================== EVENT LIFECYCLE ====================
 
   async createEvent(options: CreateEventOptions): Promise<RatmasEvent> {
-    const existingEvent = this.getActiveEvent(options.guildId);
+    const existingEvent = await this.repository.findActiveEventByGuild(options.guildId);
     if (existingEvent) {
       throw new Error(`Guild already has active event (status: ${existingEvent.status})`);
     }
@@ -69,54 +55,24 @@ export class RatService {
       throw new Error('Reveal date must be after purchase deadline');
     }
 
-    const event: RatmasEvent = {
-      id: generateId(),
-      guildId: options.guildId,
-      status: RatmasEventStatus.OPEN,
-      config: {
-        ratmasRoleId: options.ratmasRoleId,
-        eventStartDate: options.eventStartDate,
-        purchaseDeadline: options.purchaseDeadline,
-        revealDate: options.revealDate,
-        timezone: options.timezone,
-        announcementChannelId: options.announcementChannelId,
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.events.set(event.id, event);
-    return event;
+    return this.repository.createEvent(options);
   }
 
-  getActiveEvent(guildId: string): RatmasEvent | null {
-    for (const event of this.events.values()) {
-      if (
-        event.guildId === guildId &&
-        event.status !== RatmasEventStatus.COMPLETED &&
-        event.status !== RatmasEventStatus.CANCELLED
-      ) {
-        return event;
-      }
-    }
-    return null;
+  async getActiveEvent(guildId: string): Promise<RatmasEvent | null> {
+    return this.repository.findActiveEventByGuild(guildId);
   }
 
-  getEvent(eventId: string): RatmasEvent | null {
-    return this.events.get(eventId) || null;
+  async getEvent(eventId: string): Promise<RatmasEvent | null> {
+    return this.repository.findEventById(eventId);
   }
 
   async updateEventStatus(eventId: string, newStatus: RatmasEventStatus): Promise<RatmasEvent> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     validateStatusTransition(event.status, newStatus);
 
-    event.status = newStatus;
-    event.updatedAt = new Date();
-    this.events.set(eventId, event);
-
-    return event;
+    return this.repository.updateEventStatus(eventId, newStatus);
   }
 
   async cancelEvent(eventId: string): Promise<RatmasEvent> {
@@ -131,84 +87,73 @@ export class RatService {
     displayName: string,
     wishlistUrl?: string
   ): Promise<RatmasParticipant> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
       throw new Error(`Cannot add participants to event with status: ${event.status}`);
     }
 
-    if (this.isParticipant(eventId, userId)) {
+    const existingParticipant = await this.repository.findParticipantByEventAndUser(
+      eventId,
+      userId
+    );
+    if (existingParticipant) {
       throw new Error(`User ${userId} is already a participant`);
     }
 
-    const participant: RatmasParticipant = {
-      id: generateId(),
+    return this.repository.createParticipant({
       eventId,
       userId,
       guildId: event.guildId,
       displayName,
       wishlistUrl,
-      joinedAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.participants.set(participant.id, participant);
-    return participant;
+    });
   }
 
   async removeParticipant(eventId: string, userId: string): Promise<void> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
       throw new Error(`Cannot remove participants from event with status: ${event.status}`);
     }
 
-    const participant = findParticipantByUserId(this.participants, eventId, userId);
+    const participant = await this.repository.findParticipantByEventAndUser(eventId, userId);
     if (!participant) {
       throw new Error(`User ${userId} is not a participant`);
     }
 
-    this.participants.delete(participant.id);
+    await this.repository.deleteParticipant(participant.id);
   }
 
   async updateParticipant(
     participantId: string,
     updates: UpdateParticipantOptions
   ): Promise<RatmasParticipant> {
-    const participant = this.participants.get(participantId);
+    const participant = await this.repository.findParticipantById(participantId);
     if (!participant) throw new Error(`Participant ${participantId} not found`);
 
-    if (updates.displayName !== undefined) {
-      participant.displayName = updates.displayName;
-    }
-    if (updates.wishlistUrl !== undefined) {
-      participant.wishlistUrl = updates.wishlistUrl;
-    }
-
-    participant.updatedAt = new Date();
-    this.participants.set(participantId, participant);
-
-    return participant;
+    return this.repository.updateParticipant(participantId, updates);
   }
 
-  getParticipants(eventId: string): RatmasParticipant[] {
-    return Array.from(this.participants.values()).filter((p) => p.eventId === eventId);
+  async getParticipants(eventId: string): Promise<RatmasParticipant[]> {
+    return this.repository.listParticipants(eventId);
   }
 
-  isParticipant(eventId: string, userId: string): boolean {
-    return findParticipantByUserId(this.participants, eventId, userId) !== null;
+  async isParticipant(eventId: string, userId: string): Promise<boolean> {
+    const participant = await this.repository.findParticipantByEventAndUser(eventId, userId);
+    return participant !== null;
   }
 
-  getParticipantByUserId(eventId: string, userId: string): RatmasParticipant | null {
-    return findParticipantByUserId(this.participants, eventId, userId);
+  async getParticipantByUserId(eventId: string, userId: string): Promise<RatmasParticipant | null> {
+    return this.repository.findParticipantByEventAndUser(eventId, userId);
   }
 
   // ==================== PAIRING/MATCHING ====================
 
   async generatePairings(eventId: string): Promise<PairingResult> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) {
       return { success: false, pairingsCreated: 0, error: 'Event not found' };
     }
@@ -221,7 +166,7 @@ export class RatService {
       };
     }
 
-    const participants = this.getParticipants(eventId);
+    const participants = await this.repository.listParticipants(eventId);
 
     if (participants.length < 3) {
       return {
@@ -233,10 +178,7 @@ export class RatService {
 
     const newPairings = createPairings(eventId, participants, shuffleArray);
 
-    for (const pairing of newPairings) {
-      this.pairings.set(pairing.id, pairing);
-    }
-
+    await this.repository.replacePairings(eventId, newPairings);
     await this.updateEventStatus(eventId, RatmasEventStatus.MATCHED);
 
     return {
@@ -245,95 +187,109 @@ export class RatService {
     };
   }
 
-  getPairingForSanta(eventId: string, userId: string): RatmasPairing | null {
-    const participant = findParticipantByUserId(this.participants, eventId, userId);
+  async getPairingForSanta(eventId: string, userId: string): Promise<RatmasPairing | null> {
+    const participant = await this.repository.findParticipantByEventAndUser(eventId, userId);
     if (!participant) return null;
 
-    for (const pairing of this.pairings.values()) {
-      if (pairing.eventId === eventId && pairing.santaId === participant.id) {
-        return pairing;
-      }
-    }
-
-    return null;
+    return this.repository.findPairingForSanta(eventId, participant.id);
   }
 
-  getRecipientForSanta(eventId: string, userId: string): RatmasParticipant | null {
-    const pairing = this.getPairingForSanta(eventId, userId);
+  async getRecipientForSanta(eventId: string, userId: string): Promise<RatmasParticipant | null> {
+    const pairing = await this.getPairingForSanta(eventId, userId);
     if (!pairing) return null;
 
-    return this.participants.get(pairing.recipientId) || null;
+    return this.repository.findParticipantById(pairing.recipientId);
   }
 
   async notifyPairings(eventId: string): Promise<number> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.MATCHED) {
       throw new Error(`Cannot notify pairings for event with status: ${event.status}`);
     }
 
-    const notifiedCount = await notifyAllPairings(
+    const [pairings, participants] = await Promise.all([
+      this.repository.listPairingsForEvent(eventId),
+      this.repository.listParticipants(eventId),
+    ]);
+
+    const outstandingPairings = pairings.filter((pairing) => !pairing.notifiedAt);
+
+    const { notifiedCount, notifiedPairings } = await notifyAllPairings(
       event,
-      this.pairings,
-      this.participants,
+      pairings,
+      participants,
       this.messageService
     );
 
-    await this.updateEventStatus(eventId, RatmasEventStatus.NOTIFIED);
+    if (notifiedPairings.length > 0) {
+      await this.repository.markPairingsNotified(notifiedPairings);
+    }
+
+    const remainingOutstanding = Math.max(0, outstandingPairings.length - notifiedPairings.length);
+    if (pairings.length > 0 && remainingOutstanding === 0) {
+      await this.updateEventStatus(eventId, RatmasEventStatus.NOTIFIED);
+    }
 
     return notifiedCount;
   }
 
   // ==================== TIME/DATE QUERIES ====================
 
-  getEventTiming(eventId: string): EventTiming | null {
-    const event = this.events.get(eventId);
+  async getEventTiming(eventId: string): Promise<EventTiming | null> {
+    const event = await this.repository.findEventById(eventId);
     if (!event) return null;
 
     return calculateEventTiming(event);
   }
 
-  isEventActive(eventId: string): boolean {
-    return this.getEventTiming(eventId)?.isActive || false;
+  async isEventActive(eventId: string): Promise<boolean> {
+    return (await this.getEventTiming(eventId))?.isActive ?? false;
   }
 
-  isPurchaseDeadlinePassed(eventId: string): boolean {
-    return this.getEventTiming(eventId)?.isPurchaseDeadlinePassed || false;
+  async isPurchaseDeadlinePassed(eventId: string): Promise<boolean> {
+    return (await this.getEventTiming(eventId))?.isPurchaseDeadlinePassed ?? false;
   }
 
-  getDaysUntilPurchaseDeadline(eventId: string): number {
-    return this.getEventTiming(eventId)?.daysUntilPurchaseDeadline || 0;
+  async getDaysUntilPurchaseDeadline(eventId: string): Promise<number> {
+    return (await this.getEventTiming(eventId))?.daysUntilPurchaseDeadline ?? 0;
   }
 
-  getDaysUntilReveal(eventId: string): number {
-    return this.getEventTiming(eventId)?.daysUntilReveal || 0;
+  async getDaysUntilReveal(eventId: string): Promise<number> {
+    return (await this.getEventTiming(eventId))?.daysUntilReveal ?? 0;
   }
 
   // ==================== ROLE INTEGRATION ====================
 
-  /**
-   * Get the Ratmas role ID for an event
-   */
-  getRatmasRoleId(eventId: string): string | null {
-    const event = this.events.get(eventId);
-    return event?.config.ratmasRoleId || null;
+  async getRatmasRoleId(eventId: string): Promise<string | null> {
+    const event = await this.repository.findEventById(eventId);
+    return event?.config.ratmasRoleId ?? null;
   }
 
   async syncParticipantsFromRole(eventId: string): Promise<number> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
     if (event.status !== RatmasEventStatus.OPEN) {
       throw new Error(`Cannot sync participants for event with status: ${event.status}`);
     }
 
-    return syncFromRole(event, this.userService, this.participants, this.addParticipant.bind(this));
+    const participants = await this.repository.listParticipants(eventId);
+    const participantUserIds = new Set(participants.map((participant) => participant.userId));
+
+    return syncFromRole(
+      event,
+      this.userService,
+      participantUserIds,
+      this.addParticipant.bind(this)
+    );
   }
 
   async hasRatmasRole(eventId: string, userId: string): Promise<boolean> {
-    const event = this.events.get(eventId);
+    const event = await this.repository.findEventById(eventId);
     if (!event) return false;
+
     return validateUserHasRole(this.userService, event.guildId, userId, event.config.ratmasRoleId);
   }
 }
