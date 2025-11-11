@@ -214,6 +214,8 @@ export class RatService {
       this.repository.listParticipants(eventId),
     ]);
 
+    const outstandingPairings = pairings.filter((pairing) => !pairing.notifiedAt);
+
     const { notifiedCount, notifiedPairings } = await notifyAllPairings(
       event,
       pairings,
@@ -225,7 +227,10 @@ export class RatService {
       await this.repository.markPairingsNotified(notifiedPairings);
     }
 
-    await this.updateEventStatus(eventId, RatmasEventStatus.NOTIFIED);
+    const remainingOutstanding = Math.max(0, outstandingPairings.length - notifiedPairings.length);
+    if (pairings.length > 0 && remainingOutstanding === 0) {
+      await this.updateEventStatus(eventId, RatmasEventStatus.NOTIFIED);
+    }
 
     return notifiedCount;
   }
