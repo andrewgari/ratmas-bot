@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RatmasEvent {
+  id                    String             @id @default(cuid())
+  guildId               String
+  status                String             @default("open")
+  ratmasRoleId          String
+  eventStartDate        DateTime
+  purchaseDeadline      DateTime
+  revealDate            DateTime
+  timezone              String
+  announcementChannelId String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  participants RatmasParticipant[]
+  pairings     RatmasPairing[]
+
+  @@index([guildId])
+  @@index([status])
+}
+
+model RatmasParticipant {
+  id          String    @id @default(cuid())
+  eventId     String
+  userId      String
+  guildId     String
+  displayName String
+  wishlistUrl String?
+  joinedAt    DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  event             RatmasEvent      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  santaPairings     RatmasPairing[]  @relation("Santa")
+  recipientPairings RatmasPairing[]  @relation("Recipient")
+
+  @@index([eventId])
+  @@unique([eventId, userId])
+}
+
+model RatmasPairing {
+  id          String   @id @default(cuid())
+  eventId     String
+  santaId     String
+  recipientId String
+  notifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  event     RatmasEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  santa     RatmasParticipant @relation("Santa", fields: [santaId], references: [id], onDelete: Cascade)
+  recipient RatmasParticipant @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, santaId])
+  @@unique([eventId, recipientId])
+  @@index([eventId])
+}
