@@ -8,6 +8,7 @@ A comprehensive Discord service layer providing a clean data access layer (DAL) 
 - **User Profile Information**: Get detailed user profiles including avatars and roles
 - **Role Management**: Query guild roles and member role assignments
 - **Direct Messaging**: Send DMs to users with error handling
+- **Channel Messaging**: Post text messages and rich embeds to text channels
 - **Type-Safe**: Full TypeScript support with well-defined interfaces
 
 ## Installation
@@ -111,6 +112,86 @@ roles.forEach((role) => {
 });
 ```
 
+### Post Text Message to Channel
+
+```typescript
+// Simple text message
+const result = await discordService.sendTextMessage(
+  'channel-id',
+  'Hello from the bot!',
+);
+
+if (result.success) {
+  console.log(`Message posted with ID: ${result.messageId}`);
+}
+```
+
+### Post Embed to Channel
+
+```typescript
+// Rich embed message
+const result = await discordService.sendEmbed('channel-id', {
+  title: 'Server Status',
+  description: 'All systems operational',
+  color: 0x00ff00, // Green
+  fields: [
+    { name: 'Users Online', value: '42', inline: true },
+    { name: 'CPU Usage', value: '23%', inline: true },
+  ],
+  footer: { text: 'Status Bot' },
+  timestamp: true,
+});
+```
+
+### Post Complex Message with Multiple Embeds
+
+```typescript
+// Message with both text and multiple embeds
+const result = await discordService.sendMessageWithEmbeds(
+  'channel-id',
+  'Daily Report:',
+  [
+    {
+      title: 'Statistics',
+      color: 0x0099ff,
+      fields: [
+        { name: 'New Members', value: '15', inline: true },
+        { name: 'Messages', value: '1,234', inline: true },
+      ],
+    },
+    {
+      title: 'Top Contributors',
+      color: 0xffaa00,
+      description: '1. User1\n2. User2\n3. User3',
+    },
+  ],
+);
+```
+
+### Advanced Channel Message with Options
+
+```typescript
+// Full control with MessageOptions
+const result = await discordService.sendChannelMessage('channel-id', {
+  content: 'Check out this announcement:',
+  embeds: [
+    {
+      title: '🎉 New Feature Released!',
+      description: 'We just launched something amazing!',
+      color: 0xff6600,
+      thumbnail: { url: 'https://example.com/icon.png' },
+      image: { url: 'https://example.com/feature.png' },
+      fields: [
+        { name: 'Version', value: '2.0.0', inline: true },
+        { name: 'Release Date', value: 'Today', inline: true },
+      ],
+      footer: { text: 'Development Team', iconURL: 'https://example.com/logo.png' },
+      timestamp: true,
+    },
+  ],
+});
+```
+
 ## Type Definitions
 
 ### UserProfile
@@ -167,6 +248,47 @@ interface DMResult {
 }
 ```
 
+### MessageResult
+
+```typescript
+interface MessageResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+```
+
+### MessageOptions
+
+```typescript
+interface MessageOptions {
+  content?: string;
+  embeds?: MessageEmbed[];
+  files?: string[]; // File paths or URLs
+}
+```
+
+### MessageEmbed
+
+```typescript
+interface MessageEmbed {
+  title?: string;
+  description?: string;
+  color?: number; // Hex color as number (e.g., 0x00ff00)
+  fields?: EmbedField[];
+  footer?: { text: string; iconURL?: string };
+  thumbnail?: { url: string };
+  image?: { url: string };
+  timestamp?: boolean; // If true, uses current timestamp
+}
+
+interface EmbedField {
+  name: string;
+  value: string;
+  inline?: boolean;
+}
+```
+
 ## Example: Bot Command Handler
 
 ```typescript
@@ -203,6 +325,25 @@ client.on('messageCreate', async (message) => {
     const adminList = admins.map((m) => m.profile.username).join(', ');
     await message.reply(`Admins: ${adminList}`);
   }
+
+  // Announce command with embed
+  if (message.content.startsWith('!announce ') && message.channelId) {
+    const announcement = message.content.slice('!announce '.length);
+    
+    const result = await discordService.sendEmbed(message.channelId, {
+      title: '📢 Announcement',
+      description: announcement,
+      color: 0x00ff00,
+      footer: { text: `Posted by ${message.author.username}` },
+      timestamp: true,
+    });
+
+    if (result.success) {
+      await message.reply('Announcement posted!');
+    } else {
+      await message.reply(`Failed to post: ${result.error}`);
+    }
+  }
 });
 ```
 
@@ -214,6 +355,7 @@ All service methods include error handling:
 - `getGuildMember`: Returns `null` if member not found
 - `getUserProfile`: Returns `null` if user not found
 - `sendDirectMessage`: Returns `DMResult` with success/error details
+- `sendChannelMessage`, `sendTextMessage`, `sendEmbed`, `sendMessageWithEmbeds`: Return `MessageResult` with success/error details
 - `getGuildRoles`: Throws error if guild not found
 
 ## Required Discord Bot Permissions
