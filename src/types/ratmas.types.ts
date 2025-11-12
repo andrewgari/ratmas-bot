@@ -18,6 +18,7 @@ export interface RatmasEventConfig {
   eventStartDate: Date; // When the event begins
   purchaseDeadline: Date; // Last day to purchase gifts
   revealDate: Date; // When secret santas are revealed
+  eventEndDate?: Date; // When Ratmas concludes for the season
   timezone: string; // IANA timezone (e.g., "America/New_York")
   announcementChannelId?: string; // Optional channel for event announcements
 }
@@ -73,6 +74,7 @@ export interface CreateEventOptions {
   eventStartDate: Date;
   purchaseDeadline: Date;
   revealDate: Date;
+  eventEndDate: Date;
   timezone: string;
   announcementChannelId?: string;
 }
@@ -102,5 +104,6 @@ export interface EventTiming {
   isPurchaseDeadlinePassed: boolean;
   daysUntilPurchaseDeadline: number;
   daysUntilReveal: number;
+  daysUntilEnd?: number;
   currentDateInTimezone: Date;
 }

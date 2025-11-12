@@ -15,6 +15,7 @@ model RatmasEvent {
   eventStartDate        DateTime
   purchaseDeadline      DateTime
   revealDate            DateTime
+  eventEndDate          DateTime?
   timezone              String
   announcementChannelId String?
   createdAt             DateTime           @default(now())

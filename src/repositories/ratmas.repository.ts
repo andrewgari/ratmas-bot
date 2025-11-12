@@ -33,9 +33,11 @@ export class RatmasRepository {
         eventStartDate: options.eventStartDate,
         purchaseDeadline: options.purchaseDeadline,
         revealDate: options.revealDate,
+        // Cast until prisma client is regenerated with eventEndDate support
+        eventEndDate: options.eventEndDate,
         timezone: options.timezone,
         announcementChannelId: options.announcementChannelId ?? null,
-      },
+      } as never,
     });
 
     return mapEvent(record);
@@ -43,7 +45,7 @@ export class RatmasRepository {
 
   async findEventById(eventId: string): Promise<RatmasEvent | null> {
     const record = await this.client.ratmasEvent.findUnique({ where: { id: eventId } });
-    return record ? mapEvent(record) : null;
+  return record ? mapEvent(record as PrismaRatmasEvent) : null;
   }
 
   async findActiveEventByGuild(guildId: string): Promise<RatmasEvent | null> {
@@ -55,7 +57,7 @@ export class RatmasRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return record ? mapEvent(record) : null;
+  return record ? mapEvent(record as PrismaRatmasEvent) : null;
   }
 
   async updateEventStatus(eventId: string, status: RatmasEventStatus): Promise<RatmasEvent> {
@@ -203,6 +205,7 @@ export class RatmasRepository {
 
 function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
   const status = validateStatus(record.status);
+  const recordWithEndDate = record as PrismaRatmasEvent & { eventEndDate?: Date | null };
   return {
     id: record.id,
     guildId: record.guildId,
@@ -212,6 +215,7 @@ function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
       eventStartDate: record.eventStartDate,
       purchaseDeadline: record.purchaseDeadline,
       revealDate: record.revealDate,
+      eventEndDate: recordWithEndDate.eventEndDate ?? undefined,
       timezone: record.timezone,
       announcementChannelId: record.announcementChannelId ?? undefined,
     },
