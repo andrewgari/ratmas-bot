@@ -17,15 +17,21 @@ import { generateId, buildPairingNotificationMessage } from './rat.service.helpe
  */
 export function calculateEventTiming(event: RatmasEvent): EventTiming {
   const now = new Date();
-  const { eventStartDate, purchaseDeadline, revealDate } = event.config;
+  const { eventStartDate, purchaseDeadline, revealDate, eventEndDate } = event.config;
+
+  const isActiveWindow = eventEndDate
+    ? now >= eventStartDate && now <= eventEndDate
+    : now >= eventStartDate && now <= revealDate;
+  const endTarget = eventEndDate ?? revealDate;
 
   return {
-    isActive: now >= eventStartDate && now <= revealDate,
+    isActive: isActiveWindow,
     isPurchaseDeadlinePassed: now > purchaseDeadline,
     daysUntilPurchaseDeadline: Math.ceil(
       (purchaseDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     ),
     daysUntilReveal: Math.ceil((revealDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+    daysUntilEnd: Math.ceil((endTarget.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
     currentDateInTimezone: now,
   };
 }

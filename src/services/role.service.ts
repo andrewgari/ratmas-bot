@@ -44,4 +44,34 @@ export class RoleService {
       return null;
     }
   }
+
+  /**
+   * Remove a role from a guild member
+   */
+  async removeRoleFromMember(guildId: string, userId: string, roleId: string): Promise<boolean> {
+    try {
+      const guild = await this.client.guilds.fetch(guildId);
+      if (!guild) {
+        throw new Error(`Guild with ID ${guildId} not found`);
+      }
+
+      const member = await guild.members.fetch(userId);
+      if (!member) {
+        return false;
+      }
+
+      if (!member.roles.cache.has(roleId)) {
+        return false;
+      }
+
+      await member.roles.remove(roleId);
+      return true;
+    } catch (error) {
+      console.error(
+        `Failed to remove role ${roleId} from user ${userId} in guild ${guildId}:`,
+        error
+      );
+      return false;
+    }
+  }
 }

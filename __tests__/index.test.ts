@@ -9,6 +9,14 @@ jest.unstable_mockModule('discord.js', () => ({
     // @ts-expect-error
     login: jest.fn().mockResolvedValue('token'),
     user: { tag: 'TestBot#1234' },
+    application: {
+      commands: {
+        // @ts-expect-error
+        fetch: jest.fn().mockResolvedValue(new Map()),
+        // @ts-expect-error
+        create: jest.fn().mockResolvedValue({ id: 'command-id', name: 'ratmas' }),
+      },
+    },
     guilds: {
       // @ts-expect-error
       fetch: jest.fn().mockResolvedValue({
@@ -60,6 +68,7 @@ jest.unstable_mockModule('discord.js', () => ({
     ManageRoles: 268435456n,
     Connect: 1048576n,
     Speak: 2097152n,
+    Administrator: 8n,
   },
   PermissionsBitField: jest.fn().mockImplementation(() => ({
     has: jest.fn().mockReturnValue(true),
@@ -74,6 +83,48 @@ jest.unstable_mockModule('discord.js', () => ({
     setTimestamp: jest.fn().mockReturnThis(),
     addFields: jest.fn().mockReturnThis(),
   })),
+  SlashCommandBuilder: jest.fn().mockImplementation(() => ({
+    setName: jest.fn().mockReturnThis(),
+    setDescription: jest.fn().mockReturnThis(),
+    setDefaultMemberPermissions: jest.fn().mockReturnThis(),
+    addSubcommand: jest.fn().mockReturnThis(),
+    toJSON: jest.fn().mockReturnValue({}),
+  })),
+  SlashCommandSubcommandBuilder: jest.fn().mockImplementation(() => ({
+    setName: jest.fn().mockReturnThis(),
+    setDescription: jest.fn().mockReturnThis(),
+    toJSON: jest.fn().mockReturnValue({}),
+  })),
+  ModalBuilder: jest.fn().mockImplementation(() => ({
+    setCustomId: jest.fn().mockReturnThis(),
+    setTitle: jest.fn().mockReturnThis(),
+    addComponents: jest.fn().mockReturnThis(),
+  })),
+  ActionRowBuilder: jest.fn().mockImplementation(() => ({
+    addComponents: jest.fn().mockReturnThis(),
+  })),
+  TextInputBuilder: jest.fn().mockImplementation(() => ({
+    setCustomId: jest.fn().mockReturnThis(),
+    setLabel: jest.fn().mockReturnThis(),
+    setStyle: jest.fn().mockReturnThis(),
+    setRequired: jest.fn().mockReturnThis(),
+  })),
+  TextInputStyle: {
+    Short: 1,
+    Paragraph: 2,
+  },
+  ButtonBuilder: jest.fn().mockImplementation(() => ({
+    setCustomId: jest.fn().mockReturnThis(),
+    setLabel: jest.fn().mockReturnThis(),
+    setStyle: jest.fn().mockReturnThis(),
+  })),
+  ButtonStyle: {
+    Primary: 1,
+    Secondary: 2,
+    Success: 3,
+    Danger: 4,
+    Link: 5,
+  },
 }));
 
 const { main } = await import('../src/index.js');

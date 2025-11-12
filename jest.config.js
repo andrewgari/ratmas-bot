@@ -13,6 +13,7 @@ export default {
         tsconfig: {
           strict: false,
           skipLibCheck: true,
+          moduleResolution: 'node',
         },
       },
     ],
