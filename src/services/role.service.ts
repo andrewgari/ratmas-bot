@@ -67,7 +67,10 @@ export class RoleService {
       await member.roles.remove(roleId);
       return true;
     } catch (error) {
-      console.error(`Failed to remove role ${roleId} from user ${userId} in guild ${guildId}:`, error);
+      console.error(
+        `Failed to remove role ${roleId} from user ${userId} in guild ${guildId}:`,
+        error
+      );
       return false;
     }
   }

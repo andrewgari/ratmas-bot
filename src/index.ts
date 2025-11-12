@@ -1,9 +1,16 @@
-import { Client, GatewayIntentBits, Message } from 'discord.js';
+import { Client, GatewayIntentBits, Message, Interaction } from 'discord.js';
 import dotenv from 'dotenv';
 import { UserService } from './services/user.service.js';
 import { MessageService } from './services/message.service.js';
 import { ChannelService } from './services/channel.service.js';
 import { RoleService } from './services/role.service.js';
+import { RatService } from './services/rat.service.js';
+import {
+  ensureRatmasStartCommand,
+  handleRatmasStartCommand,
+  handleRatmasStartModal,
+  handleRatmasOptOutButton,
+} from './commands/ratmas-start.command.js';
 
 // Load environment variables
 dotenv.config();
@@ -30,13 +37,28 @@ export function main(): void {
   const messageService = new MessageService(client);
   const channelService = new ChannelService(client);
   const roleService = new RoleService(client);
+  const ratService = new RatService(client, userService, messageService);
 
   // Event handler for when the bot is ready
-  client.once('ready', () => {
+  client.once('ready', async () => {
     // eslint-disable-next-line no-console
     console.log(`Logged in as ${client.user?.tag}!`);
     // eslint-disable-next-line no-console
     console.log('Discord services are ready');
+
+    // Register slash commands
+    const guildId = process.env['GUILD_ID'];
+    if (guildId) {
+      try {
+        await ensureRatmasStartCommand(client, guildId);
+        // eslint-disable-next-line no-console
+        console.log('Ratmas commands registered');
+      } catch (error) {
+        console.error('Failed to register Ratmas commands:', error);
+      }
+    } else {
+      console.warn('GUILD_ID not set, skipping slash command registration');
+    }
   });
 
   // Event handler for messages
@@ -49,6 +71,19 @@ export function main(): void {
       channelService,
       roleService,
     });
+  });
+
+  // Event handler for interactions (slash commands, modals, buttons)
+  client.on('interactionCreate', async (interaction: Interaction) => {
+    const deps = { ratService, channelService, roleService };
+
+    if (interaction.isChatInputCommand()) {
+      await handleRatmasStartCommand(interaction, deps);
+    } else if (interaction.isModalSubmit()) {
+      await handleRatmasStartModal(interaction, deps);
+    } else if (interaction.isButton()) {
+      await handleRatmasOptOutButton(interaction, deps);
+    }
   });
 
   // Login to Discord

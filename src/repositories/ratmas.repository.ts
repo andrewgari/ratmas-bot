@@ -45,7 +45,7 @@ export class RatmasRepository {
 
   async findEventById(eventId: string): Promise<RatmasEvent | null> {
     const record = await this.client.ratmasEvent.findUnique({ where: { id: eventId } });
-  return record ? mapEvent(record as PrismaRatmasEvent) : null;
+    return record ? mapEvent(record as PrismaRatmasEvent) : null;
   }
 
   async findActiveEventByGuild(guildId: string): Promise<RatmasEvent | null> {
@@ -57,7 +57,7 @@ export class RatmasRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-  return record ? mapEvent(record as PrismaRatmasEvent) : null;
+    return record ? mapEvent(record as PrismaRatmasEvent) : null;
   }
 
   async updateEventStatus(eventId: string, status: RatmasEventStatus): Promise<RatmasEvent> {

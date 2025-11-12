@@ -185,5 +185,10 @@ async function applyRatmasPermissions(params: {
 }): Promise<void> {
   const { channelService, channelId, ratmasRoleId, everyoneRoleId } = params;
   await channelService.setChannelPermissions(channelId, everyoneRoleId, [], ['ViewChannel']);
-  await channelService.setChannelPermissions(channelId, ratmasRoleId, ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AddReactions']);
+  await channelService.setChannelPermissions(channelId, ratmasRoleId, [
+    'ViewChannel',
+    'SendMessages',
+    'ReadMessageHistory',
+    'AddReactions',
+  ]);
 }

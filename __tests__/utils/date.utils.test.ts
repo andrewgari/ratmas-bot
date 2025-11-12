@@ -46,8 +46,8 @@ describe('date.utils', () => {
     expect(formatDateForTimezone(schedule.eventStartDate, schedule.timezone)).toContain(
       'December 1, 2025'
     );
-    expect(calculateAssignmentAnnouncementDate(schedule.eventStartDate, schedule.timezone)).toContain(
-      'December 6, 2025'
-    );
+    expect(
+      calculateAssignmentAnnouncementDate(schedule.eventStartDate, schedule.timezone)
+    ).toContain('December 6, 2025');
   });
 });

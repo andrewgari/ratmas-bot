@@ -52,13 +52,13 @@ describe('ratmas-start command integration', () => {
     await handleRatmasStartCommand(interaction, deps);
 
     expect(showModal).toHaveBeenCalledTimes(1);
-  const modal = showModal.mock.calls[0]?.[0] as { data?: { custom_id?: string } } | undefined;
-  expect(modal?.data?.custom_id).toBe(RATMAS_START_MODAL_ID);
+    const modal = showModal.mock.calls[0]?.[0] as { data?: { custom_id?: string } } | undefined;
+    expect(modal?.data?.custom_id).toBe(RATMAS_START_MODAL_ID);
   });
 
   it('runs the full modal flow and persists the event', async () => {
     const send = jest.fn();
-  channelServiceMocks.setChannelPermissions.mockImplementation(async () => ({ success: true }));
+    channelServiceMocks.setChannelPermissions.mockImplementation(async () => ({ success: true }));
 
     type MinimalChannel = { id: string; name: string; type: ChannelType };
     const guildChannels = new Map<string, MinimalChannel>();
@@ -140,8 +140,8 @@ describe('ratmas-start command integration', () => {
     expect(eventPayload.purchaseDeadline.toISOString()).toBe('2025-12-16T04:59:59.999Z');
 
     expect(send).toHaveBeenCalled();
-  const message = send.mock.calls[0]?.[0] as { content: string };
-  expect(message?.content).toContain('Ratmas 2025 has begun');
+    const message = send.mock.calls[0]?.[0] as { content: string };
+    expect(message?.content).toContain('Ratmas 2025 has begun');
 
     expect(interaction.reply).toHaveBeenCalledWith({
       content: 'Ratmas 2025 is live in <#ratmas-channel-id>!',
