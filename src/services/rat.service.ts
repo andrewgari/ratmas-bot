@@ -51,11 +51,8 @@ export class RatService {
     if (options.purchaseDeadline <= options.eventStartDate) {
       throw new Error('Purchase deadline must be after event start date');
     }
-    if (options.revealDate <= options.purchaseDeadline) {
-      throw new Error('Reveal date must be after purchase deadline');
-    }
-    if (options.eventEndDate <= options.revealDate) {
-      throw new Error('Event end date must be after the opening/reveal date');
+    if (options.revealDate < options.eventEndDate) {
+      throw new Error('Reveal date must be on or after the event end date');
     }
 
     return this.repository.createEvent(options);

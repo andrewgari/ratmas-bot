@@ -15,6 +15,7 @@
     "lint:fix": "eslint ./src ./__tests__ --ext .ts --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+  "docker:run": "docker compose -f docker-compose.dev.yml up --build",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev"

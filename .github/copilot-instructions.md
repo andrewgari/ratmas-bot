@@ -1,40 +1,36 @@
 # Copilot Instructions
+## Architecture Snapshot
+- `src/index.ts` bootstraps the Discord client, instantiates the scoped services (`UserService`, `MessageService`, `ChannelService`, `RoleService`) and still handles the legacy prefix commands; mirror that composition when introducing new entry-points.
+- `src/services/rat.service.ts` orchestrates Ratmas events, delegating validation to `rat.service.helpers.ts`, pairing/DM flows to `rat.service.operations.ts`, and persistence to `repositories/ratmas.repository.ts`.
+- Prisma models live in `prisma/schema.prisma`; the shared client is exported via `src/persistence/prisma-client.ts`—never construct `PrismaClient` directly.
+- Domain notes live under `docs/` (especially `ARCHITECTURE.md` and `PERSISTENCE.md`) and explain why services are narrow and data access is centralized.
 
-## Codebase Snapshot
+## Ratmas Domain & Persistence
+- `RatmasEvent` includes schedule fields (`eventStartDate`, `eventEndDate`, `purchaseDeadline`, `revealDate`, `timezone`); keep `src/types/ratmas.types.ts` in sync with schema and update enum guards (`RatmasEventStatus`, `ACTIVE_STATUSES`) when adding states.
+- `RatmasRepository` is the only Prisma touch-point; reuse its mapping helpers and existing validation (`VALID_STATUS_VALUES`) when adding queries or writes.
+- Pairings are replaced transactionally through `replacePairings`; never mutate pairing rows ad hoc or you’ll violate the uniqueness guarantees baked into the schema.
 
-- `src/index.ts` boots the Discord client, wires slash-like message handlers, and composes the domain services (`UserService`, `MessageService`, `ChannelService`, `RoleService`); mirror this pattern when introducing new handlers.
-- `src/services/rat.service.ts` owns Ratmas event lifecycle with persistence; it delegates status rules to `rat.service.helpers.ts`, pairing + DM orchestration to `rat.service.operations.ts`, and data access to `repositories/ratmas.repository.ts`.
-- Prisma models live in `prisma/schema.prisma`; the shared client is exported from `src/persistence/prisma-client.ts` (reuse it, do not instantiate `PrismaClient` directly, especially in tests).
-- Docs under `docs/*.md` explain intent for the split service architecture and persistence changes; consult `docs/ARCHITECTURE.md` and `docs/PERSISTENCE.md` before reshaping core flows.
+## Discord Integrations
+- New slash behaviour sits in `src/commands/`; `ratmas-start.command.ts` registers `/ratmas start`, uses `ensureRatmasStartCommand` per guild, and gates access via `RATMAS_ROLE_ID` + admin permissions.
+- Modal + channel orchestration lives in `ratmas-start.helpers.ts`, which leans on `ChannelService` for creation/permissions and posts the welcome message with an opt-out button (`RATMAS_OPT_OUT_BUTTON_ID`).
+- Timezone parsing/formatting goes through `src/utils/date.utils.ts` (Luxon). Always pass the schedule through `parseRatmasSchedule` so inputs are validated and normalized to UTC before persistence.
 
-## Architectural Patterns
-
-- Services are narrow and injected with the Discord `Client`; add new Discord integrations by extending or composing these specialized services instead of reviving the legacy `DiscordService`.
-- Domain types in `src/types/*.ts` mirror Prisma models; any schema change must update the enum/constants (`RatmasEventStatus`, `ACTIVE_STATUSES`) and downstream switch/guard logic.
-- `RatService.generatePairings` expects at least three participants and persists through `replacePairings`; keep that transactional contract when altering pairing logic.
-- `notifyAllPairings` defers DM content to `buildPairingNotificationMessage`; update that helper for copy changes so the DM + status progression (`MATCHED` → `NOTIFIED`) stays consistent.
-- Environment-driven behaviour: `DISCORD_TOKEN` is mandatory for runtime, `DATABASE_URL` chooses the SQLite file, and guild/role gating comes from `.env` keys in `README.md`.
+## Services & Utilities
+- Services are thin wrappers around the Discord client; prefer adding capabilities to the existing service or composing a new one rather than reviving the legacy `DiscordService`.
+- `RoleService.removeRoleFromMember` is the approved way to drop the Ratmas role during opt-out interactions.
+- Helper utilities (`shuffleArray`, `generateId`, schedule helpers) accept injectable dependencies—use that to keep tests deterministic.
 
 ## Workflows & Tooling
+- Node 20+ with native ESM is required; always import local files with the `.js` suffix.
+- Install deps with `npm install`; key scripts: `npm run build`, `npm run lint`, `npm run format:check`, `npm run prisma:generate`, `npm run prisma:migrate:dev`.
+- Tests run with Jest ESM + ts-jest (`npm test` sets `NODE_OPTIONS=--experimental-vm-modules`). The command/utility tests mock `discord.js` behaviour directly—follow those patterns for new coverage.
+- Regenerate Prisma client after touching the schema and ensure migrations land in `prisma/migrations/`.
 
-- Node 20+ with ESM (`"type": "module"`) is required; always import local modules with explicit `.js` extensions.
-- Install deps with `npm install`, run type-check/build via `npm run build`, lint with `npm run lint`, format using `npm run format:check` or `npm run format`.
-- Tests run under Jest ESM mode: `npm test` injects `NODE_OPTIONS=--experimental-vm-modules`. Unit tests mock `discord.js` via `jest.unstable_mockModule`; follow that approach for new service tests.
-- When touching Prisma schema, regenerate clients (`npm run prisma:generate`) and ensure migrations are captured (`npm run prisma:migrate:dev`).
-- Local dev typically runs the compiled bot with `node dist/index.js` (or `tsx src/index.ts` if adding a script); align any new scripts with Docker + README expectations.
-
-## Persistence & Data Flow
-
-- `RatmasRepository` is the single gateway to Prisma; maintain mapping helpers (`mapEvent`, `mapParticipant`, etc.) and reuse `VALID_STATUS_VALUES` checks for guards.
-- Pairings are replaced wholesale inside a transaction; never partially mutate pairing rows or you can desync Santa/recipient uniqueness guarantees from `schema.prisma`.
-- Helper utilities (`shuffleArray`, `generateId`) are injectable to enable deterministic testing—pass alt shufflers in new code that needs reproducible results.
-
-## Testing & Examples
-
-- See `__tests__/index.test.ts` for how runtime boot is validated without hitting real Discord; spoof external calls and assert `process.exit`/console behaviour there.
-- Prefer creating focused service tests beside existing helpers rather than end-to-end Discord calls; rely on the mapper utilities to shape fake Discord entities.
+## Testing Patterns
+- `__tests__/commands/` covers the `/ratmas start` modal flow and helper utilities—use these as templates for mocking Discord interactions without hitting the real API.
+- `__tests__/utils/date.utils.test.ts` demonstrates Luxon-based assertions; prefer asserting on formatted strings rather than raw Date objects when validating user-facing copy.
+- `__tests__/index.test.ts` shows how to boot the app while intercepting `process.exit` and spoofing the Discord client.
 
 ## Repo Hygiene
-
-- Follow `CLAUDE.md`: avoid dropping helper files in repo root, store temp planning under `/temp/`, and keep infrastructure changes separate from gameplay/business logic.
-- When adding documentation or operational guides, place them under `docs/` to stay consistent with current structure.
+- Follow `CLAUDE.md`: keep temporary planning in `/temp/`, avoid new helpers at repo root, and separate infra vs gameplay logic changes.
+- Documentation and operational notes belong under `docs/`; keep PRs aligned with the existing structure and conventions.
