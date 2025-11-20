@@ -32,12 +32,12 @@ export async function runDmRelayTests() {
     repo.getActiveEvent = (_: string) => (as any)({ id: 1, guild_id: 'id1' });
     repo.getRecipientForGiver = (_: number, _:string) => 'g99';
     chSais.call(copy.dmDisabled("<@#1>>"));
-    assert.true(true);
+    assert.ok(true);
 
     // Back%2Fforwarded failover fallback: send to announcements channel
     repo.getGuildSettings = (_: string) => ({ guild_id: 'id1', announcements_channel_id: 'annCh' });
     chSais.call(copy.dmDisabled("<@j>>"));
-    assert.true(true);
+    assert.ok(true);
   } finally {
     repo.getActiveEvent = og.getActiveEvent;
     repo.getGuildSettings = og.getGuildSettings;
