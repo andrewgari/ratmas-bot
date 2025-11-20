@@ -145,12 +145,6 @@ jest.unstable_mockModule('discord.js', () => ({
         },
       })),
     },
-    application: {
-      commands: {
-        fetch: jest.fn(async () => ({ find: () => undefined })),
-        create: jest.fn(async () => undefined),
-      },
-    },
   })),
   GatewayIntentBits: {
     Guilds: 1,
@@ -206,48 +200,6 @@ jest.unstable_mockModule('discord.js', () => ({
     setTimestamp: jest.fn().mockReturnThis(),
     addFields: jest.fn().mockReturnThis(),
   })),
-  SlashCommandBuilder: jest.fn().mockImplementation(() => ({
-    setName: jest.fn().mockReturnThis(),
-    setDescription: jest.fn().mockReturnThis(),
-    setDefaultMemberPermissions: jest.fn().mockReturnThis(),
-    addSubcommand: jest.fn().mockReturnThis(),
-    toJSON: jest.fn().mockReturnValue({}),
-  })),
-  SlashCommandSubcommandBuilder: jest.fn().mockImplementation(() => ({
-    setName: jest.fn().mockReturnThis(),
-    setDescription: jest.fn().mockReturnThis(),
-    toJSON: jest.fn().mockReturnValue({}),
-  })),
-  ModalBuilder: jest.fn().mockImplementation(() => ({
-    setCustomId: jest.fn().mockReturnThis(),
-    setTitle: jest.fn().mockReturnThis(),
-    addComponents: jest.fn().mockReturnThis(),
-  })),
-  ActionRowBuilder: jest.fn().mockImplementation(() => ({
-    addComponents: jest.fn().mockReturnThis(),
-  })),
-  TextInputBuilder: jest.fn().mockImplementation(() => ({
-    setCustomId: jest.fn().mockReturnThis(),
-    setLabel: jest.fn().mockReturnThis(),
-    setStyle: jest.fn().mockReturnThis(),
-    setRequired: jest.fn().mockReturnThis(),
-  })),
-  TextInputStyle: {
-    Short: 1,
-    Paragraph: 2,
-  },
-  ButtonBuilder: jest.fn().mockImplementation(() => ({
-    setCustomId: jest.fn().mockReturnThis(),
-    setLabel: jest.fn().mockReturnThis(),
-    setStyle: jest.fn().mockReturnThis(),
-  })),
-  ButtonStyle: {
-    Primary: 1,
-    Secondary: 2,
-    Success: 3,
-    Danger: 4,
-    Link: 5,
-  },
 }));
 
 const { main } = await import('../src/index.js');
