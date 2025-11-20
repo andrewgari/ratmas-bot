@@ -1,5 +1,5 @@
 /// <reference path="./types/shims.d.ts" />
-n from 'luxon';
+import { DateTime } from 'luxon';
 import { repo } from './repo.js';
 import { copy } from './messages.js';
 import type { Client, TextChannel } from 'discord.js';
