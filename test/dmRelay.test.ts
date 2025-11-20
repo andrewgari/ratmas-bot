@@ -11,7 +11,7 @@ function makeClient(ch: TextChannel): Client {
 function makeChannel(id = 'annCh') {
   const sent: string[] = [];
   const ch: any = { id, send: async (m: string) => { sent.push(m); } };
-  return { ch: ch, chSais:send };
+  return { ch: ch, chSent: sent };
 }
 
 export async function runDmRelayTests() {
