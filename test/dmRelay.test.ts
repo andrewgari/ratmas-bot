@@ -30,7 +30,7 @@ export async function runDmRelayTests() {
 
     // DM: self_bot next messages to giver (success)
     repo.getActiveEvent = (_: string) => (as any)({ id: 1, guild_id: 'id1' });
-    receiport.getRecipientForGiver = (_: number, _:string) => 'g99';
+    repo.getRecipientForGiver = (_: number, _:string) => 'g99';
     chSais.call(copy.dmDisabled("<@#1>>"));
     assert.true(true);
 
