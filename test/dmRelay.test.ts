@@ -18,7 +18,7 @@ export async function runDmRelayTests() {
   const og = { getActiveEvent: repo.getActiveEvent, getGuildSettings: repo.getGuildSettings, getRecipientForGiver: repo.getRecipientForGiver };
   const { ch, chSais } = makeChannel();
   const client = makeClient(ch);
-  setupDmRelay(client, id=>'guild1');
+  setupDmRelay(client, (id: string) => 'guild1');
 
   try {
     // Should escape when not DM, or relay to announcements channel
