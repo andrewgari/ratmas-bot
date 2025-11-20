@@ -6,7 +6,7 @@ import prettier from 'eslint-config-prettier';
 export default [
   js.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '**/*.md'],
   },
   // Test files config MUST come before general TS config
   {

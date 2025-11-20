@@ -4,64 +4,137 @@ import { UserService } from './services/user.service.js';
 import { MessageService } from './services/message.service.js';
 import { ChannelService } from './services/channel.service.js';
 import { RoleService } from './services/role.service.js';
+import { RatService } from './services/rat.service.js';
+import {
+  ensureRatmasStartCommand,
+  handleRatmasStartCommand,
+  handleRatmasStartModal,
+  handleRatmasOptOutButton,
+} from './commands/ratmas-start.command.js';
 
-// Load environment variables
 dotenv.config();
 
-/**
- * Main entry point for the application
- */
+type AppServices = {
+  userService: UserService;
+  messageService: MessageService;
+  channelService: ChannelService;
+  roleService: RoleService;
+  ratService: RatService;
+};
+
+type RatmasCommandDependencies = Pick<AppServices, 'ratService' | 'channelService' | 'roleService'>;
+
 export function main(): void {
   // eslint-disable-next-line no-console
   console.log('Ratmas Bot - Starting...');
 
-  // Create Discord client with necessary intents
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildMembers, // Required for member queries
-    ],
-  });
+  const client = createDiscordClient();
+  const services = initializeServices(client);
 
-  // Initialize services
-  const userService = new UserService(client);
-  const messageService = new MessageService(client);
-  const channelService = new ChannelService(client);
-  const roleService = new RoleService(client);
+  registerReadyHandler(client);
+  registerGuildCreateHandler(client);
+  registerInteractionHandlers(client, services);
+  registerMessageHandler(client, services);
 
-  // Event handler for when the bot is ready
-  client.once('ready', () => {
-    // eslint-disable-next-line no-console
-    console.log(`Logged in as ${client.user?.tag}!`);
-    // eslint-disable-next-line no-console
-    console.log('Discord services are ready');
-  });
-
-  // Event handler for messages
-  client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
-
-    await handleCommands(message, {
-      userService,
-      messageService,
-      channelService,
-      roleService,
-    });
-  });
-
-  // Login to Discord
   const token = process.env['DISCORD_TOKEN'];
   if (!token) {
     console.error('ERROR: DISCORD_TOKEN not found in environment variables');
     process.exit(1);
   }
 
-  client.login(token).catch((error) => {
+  client.login(token).catch((error: unknown) => {
     console.error('Failed to login:', error);
     process.exit(1);
   });
+}
+
+function createDiscordClient(): Client {
+  return new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMembers,
+    ],
+  });
+}
+
+function initializeServices(client: Client): AppServices {
+  const userService = new UserService(client);
+  const messageService = new MessageService(client);
+  const channelService = new ChannelService(client);
+  const roleService = new RoleService(client);
+  const ratService = new RatService(client, userService, messageService);
+
+  return {
+    userService,
+    messageService,
+    channelService,
+    roleService,
+    ratService,
+  };
+}
+
+function registerReadyHandler(client: Client): void {
+  client.once('ready', async () => {
+    // eslint-disable-next-line no-console
+    console.log(`Logged in as ${client.user?.tag}!`);
+    // eslint-disable-next-line no-console
+    console.log('Discord services are ready');
+
+    try {
+      const guilds = await client.guilds.fetch();
+      await Promise.all(
+        [...guilds.values()].map((guild) => ensureRatmasStartCommand(client, guild.id))
+      );
+    } catch (error) {
+      console.error('Failed to register Ratmas commands:', error);
+    }
+  });
+}
+
+function registerGuildCreateHandler(client: Client): void {
+  client.on('guildCreate', async (guild) => {
+    try {
+      await ensureRatmasStartCommand(client, guild.id);
+    } catch (error) {
+      console.error(`Failed to register Ratmas commands for guild ${guild.id}:`, error);
+    }
+  });
+}
+
+function registerInteractionHandlers(client: Client, services: AppServices): void {
+  const ratmasDependencies = getRatmasDependencies(services);
+
+  client.on('interactionCreate', async (interaction) => {
+    try {
+      if (interaction.isChatInputCommand()) {
+        await handleRatmasStartCommand(interaction, ratmasDependencies);
+      } else if (interaction.isModalSubmit()) {
+        await handleRatmasStartModal(interaction, ratmasDependencies);
+      } else if (interaction.isButton()) {
+        await handleRatmasOptOutButton(interaction, ratmasDependencies);
+      }
+    } catch (error) {
+      console.error('Error handling interaction:', error);
+    }
+  });
+}
+
+function registerMessageHandler(client: Client, services: AppServices): void {
+  client.on('messageCreate', async (message) => {
+    if (message.author.bot) return;
+
+    await handleCommands(message, services);
+  });
+}
+
+function getRatmasDependencies(services: AppServices): RatmasCommandDependencies {
+  return {
+    ratService: services.ratService,
+    channelService: services.channelService,
+    roleService: services.roleService,
+  };
 }
 
 /**
@@ -69,12 +142,7 @@ export function main(): void {
  */
 async function handleCommands(
   message: Message,
-  services: {
-    userService: UserService;
-    messageService: MessageService;
-    channelService: ChannelService;
-    roleService: RoleService;
-  }
+  services: Pick<AppServices, 'userService' | 'messageService' | 'channelService' | 'roleService'>
 ): Promise<void> {
   if (message.content === '!ping') {
     message.reply('Pong!');

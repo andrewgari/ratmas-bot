@@ -31,10 +31,10 @@ Slash commands register to the specified guild on startup.
 
 ## Commands
 
+- /ratmas start — Start a new Ratmas event with schedule (start date, end date, opening day, purchase deadline) and timezone.
 - /ratmas status — Show current event status, participant count, matched pairs (if applicable), and key dates in the event timezone.
 - /ratmas config set-channel — Set announcements channel.
 - /ratmas config set-role — Set organizer role.
-- /ratmas open — Open an event with ISO dates and an IANA timezone.
 - /ratmas join|update|leave — Participant actions.
 - /ratmas lock|match|notify|cancel|purge — Organizer lifecycle actions.
 
