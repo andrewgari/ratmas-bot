@@ -22,10 +22,7 @@ type AppServices = {
   ratService: RatService;
 };
 
-type RatmasCommandDependencies = Pick<
-  AppServices,
-  'ratService' | 'channelService' | 'roleService'
->;
+type RatmasCommandDependencies = Pick<AppServices, 'ratService' | 'channelService' | 'roleService'>;
 
 export function main(): void {
   // eslint-disable-next-line no-console
