@@ -13,6 +13,9 @@ export default {
         tsconfig: {
           strict: false,
           skipLibCheck: true,
+          noImplicitAny: false,
+          strictNullChecks: false,
+          moduleResolution: 'node',
         },
       },
     ],
