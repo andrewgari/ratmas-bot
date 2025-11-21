@@ -86,8 +86,7 @@ export async function prepareRatmasChannel(params: {
   const guild = await client.guilds.fetch(guildId);
   const channels = await guild.channels.fetch();
 
-  const yearLabel = DateTime.fromJSDate(schedule.eventStartDate, { zone: 'utc' })
-    .year.toString();
+  const yearLabel = DateTime.fromJSDate(schedule.eventStartDate, { zone: 'utc' }).year.toString();
   const channelName = `ratmas-${yearLabel}`;
 
   const existing = channels.find(

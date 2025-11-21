@@ -33,7 +33,7 @@ describe('date.utils', () => {
 
   it('formats dates as Discord timestamps', () => {
     const date = new Date('2025-12-01T00:00:00.000Z');
-    
+
     expect(toDiscordTimestamp(date, 'D')).toBe('<t:1764547200:D>');
     expect(toDiscordTimestamp(date, 'F')).toBe('<t:1764547200:F>');
     expect(toDiscordTimestamp(date, 'R')).toBe('<t:1764547200:R>');
@@ -42,7 +42,7 @@ describe('date.utils', () => {
   it('calculates assignment announcement date as Discord timestamp', () => {
     const startDate = new Date('2025-12-01T00:00:00.000Z');
     const announcement = calculateAssignmentAnnouncementDate(startDate);
-    
+
     // Should be 5 days after start date
     expect(announcement).toContain('<t:');
     expect(announcement).toContain(':D>');

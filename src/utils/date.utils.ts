@@ -20,7 +20,10 @@ export interface RatmasSchedule {
  * @param style - Discord timestamp style (t=short time, T=long time, d=short date, D=long date, f=short datetime, F=long datetime, R=relative)
  * @returns Discord timestamp markdown string
  */
-export function toDiscordTimestamp(date: Date, style: 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R' = 'D'): string {
+export function toDiscordTimestamp(
+  date: Date,
+  style: 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R' = 'D'
+): string {
   const timestamp = Math.floor(date.getTime() / 1000);
   return `<t:${timestamp}:${style}>`;
 }
@@ -29,11 +32,7 @@ export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule 
   const eventStart = parseDateFieldUTC(input.startDate, 'Start date', 'start');
   const eventEnd = parseDateFieldUTC(input.endDate, 'End date', 'end');
   const reveal = parseDateFieldUTC(input.revealDate, 'Opening day', 'start');
-  const purchaseDeadline = parseDateFieldUTC(
-    input.purchaseDeadline,
-    'Purchase deadline',
-    'end'
-  );
+  const purchaseDeadline = parseDateFieldUTC(input.purchaseDeadline, 'Purchase deadline', 'end');
 
   return {
     eventStartDate: eventStart.toJSDate(),
@@ -44,17 +43,12 @@ export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule 
 }
 
 export function calculateAssignmentAnnouncementDate(eventStartDate: Date): string {
-  const assignmentDate = DateTime.fromJSDate(eventStartDate, { zone: 'utc' })
-    .plus({ days: 5 });
+  const assignmentDate = DateTime.fromJSDate(eventStartDate, { zone: 'utc' }).plus({ days: 5 });
 
   return toDiscordTimestamp(assignmentDate.toJSDate(), 'D');
 }
 
-function parseDateFieldUTC(
-  value: string,
-  label: string,
-  boundary: 'start' | 'end'
-): DateTime {
+function parseDateFieldUTC(value: string, label: string, boundary: 'start' | 'end'): DateTime {
   const trimmed = value.trim();
   if (!trimmed) {
     throw new Error(`${label} is required.`);
