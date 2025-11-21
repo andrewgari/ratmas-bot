@@ -107,9 +107,10 @@ export class RatService {
 
     try {
       const participants = await this.repository.listParticipants(event.id);
+      const participantLabel = participants.length === 1 ? 'participant' : 'participants';
       await this.messageService.sendEmbed(event.config.announcementChannelId, {
         title: '🎄 Ratmas Has Ended! 🎄',
-        description: `Thank you to all ${participants.length} participants for making this Ratmas special! We hope everyone enjoyed their gifts and the spirit of giving. Until next year! 🐀🎁`,
+        description: `Thank you to all ${participants.length} ${participantLabel} for making this Ratmas special! We hope everyone enjoyed their gifts and the spirit of giving. Until next year! 🐀🎁`,
         color: 0x00ff00,
         timestamp: new Date(),
       });
