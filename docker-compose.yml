@@ -18,10 +18,8 @@ services:
 
     # Volume mappings
     volumes:
-      # Persistent database storage
-      - ratmas_data:/app/data
-      # Optional: bind mount for development
-      # - ./data:/app/data
+      # Persistent database storage - bind mount for simplicity
+      - ./data:/app/data
 
     # Resource limits
     deploy:
@@ -47,12 +45,3 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-
-# Named volumes for persistence
-volumes:
-  ratmas_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}
