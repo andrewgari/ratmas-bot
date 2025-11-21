@@ -31,6 +31,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -47,7 +50,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=pr,prefix=pr-,suffix=-${{ github.sha }},enable=true,priority=100
+            type=ref,event=pr,prefix=pr-,suffix=-{{sha}},enable=true,priority=100
             type=ref,event=pr,prefix=pr-,suffix=-latest,enable=true,priority=90
             type=sha,enable=true,priority=80,prefix=sha-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }},priority=70
@@ -64,11 +67,14 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           provenance: true
           sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Show image digest
         run: |
