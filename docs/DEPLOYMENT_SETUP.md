@@ -5,6 +5,7 @@ This guide walks you through setting up secure, automatic deployment for the Rat
 ## Overview
 
 The deployment workflow:
+
 - Runs on a self-hosted runner on your server (no SSH ports exposed to the internet)
 - Uses Tailscale for secure networking
 - Deploys via Docker Compose on every push to `main`
@@ -20,6 +21,7 @@ The deployment workflow:
 1. SSH into your server (however you currently access it)
 
 2. Install Tailscale:
+
    ```bash
    curl -fsSL https://tailscale.com/install.sh | sh
    ```
@@ -28,14 +30,14 @@ The deployment workflow:
    ```bash
    sudo tailscale up
    ```
-   
 4. Open the URL in your browser and authenticate with your Tailscale account
 
 5. Verify installation:
+
    ```bash
    tailscale status
    ```
-   
+
    Note your server's Tailscale IP (e.g., `100.x.x.x`) and MagicDNS name.
 
 ## Step 2: Set Up GitHub Actions Self-Hosted Runner
@@ -45,11 +47,13 @@ The deployment workflow:
 2. Select **Linux** as the operating system
 
 3. On your server, create a directory for the runner:
+
    ```bash
    mkdir -p ~/actions-runner && cd ~/actions-runner
    ```
 
 4. Download the runner (use the exact commands provided by GitHub, but here's an example):
+
    ```bash
    curl -o actions-runner-linux-x64-2.316.0.tar.gz -L \
      https://github.com/actions/runner/releases/download/v2.316.0/actions-runner-linux-x64-2.316.0.tar.gz
@@ -57,10 +61,11 @@ The deployment workflow:
    ```
 
 5. Configure the runner (replace `<TOKEN>` with the token from GitHub):
+
    ```bash
    ./config.sh --url https://github.com/andrewgari/ratmas-bot --token <TOKEN>
    ```
-   
+
    When prompted:
    - Runner group: Press Enter (default)
    - Runner name: Press Enter (or choose a name like "ratmas-server")
@@ -68,6 +73,7 @@ The deployment workflow:
    - Labels: Press Enter (default)
 
 6. **Option A: Run the runner interactively (for testing)**
+
    ```bash
    ./run.sh
    ```
@@ -94,6 +100,7 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
 ## Step 4: Prepare Your Server Environment
 
 1. Clone the repository on your server (if not already done):
+
    ```bash
    cd ~
    git clone https://github.com/andrewgari/ratmas-bot.git
@@ -101,11 +108,13 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
    ```
 
 2. Create the data directory for the SQLite database:
+
    ```bash
    mkdir -p data
    ```
 
 3. Ensure Docker is running:
+
    ```bash
    sudo systemctl status docker
    ```
@@ -133,10 +142,12 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
 ## Troubleshooting
 
 ### Runner not showing as online
+
 - Check the runner service: `sudo ./svc.sh status`
 - View runner logs: `journalctl -u actions.runner.andrewgari-ratmas-bot.*`
 
 ### Docker permission denied
+
 - Add the runner user to the docker group:
   ```bash
   sudo usermod -aG docker $USER
@@ -144,10 +155,12 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
 - Restart the runner service
 
 ### Secrets not loading
+
 - Verify secrets are set in GitHub Settings → Secrets and variables → Actions
 - Check the workflow logs for specific error messages
 
 ### Container fails to start
+
 - Check logs: `docker-compose logs`
 - Verify the `.env` file was created: `cat .env`
 - Ensure the database directory exists: `ls -la data/`

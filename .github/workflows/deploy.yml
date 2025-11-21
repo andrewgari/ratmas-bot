@@ -10,11 +10,11 @@ jobs:
   deploy:
     name: Deploy via Docker Compose
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Create .env file from secrets
         run: |
           cat > .env << EOF
@@ -23,19 +23,19 @@ jobs:
           RATMAS_ROLE_ID=${{ secrets.RATMAS_ROLE_ID }}
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
-      
+
       - name: Pull Docker images
         run: docker-compose pull
-      
+
       - name: Stop existing containers
         run: docker-compose down
-      
+
       - name: Start services
         run: docker-compose up -d
-      
+
       - name: Clean up old images
         run: docker image prune -f
-      
+
       - name: Check service health
         run: |
           echo "Waiting for service to be ready..."
