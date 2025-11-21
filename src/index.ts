@@ -8,7 +8,6 @@ import { RatService } from './services/rat.service.js';
 import {
   ensureRatmasStartCommand,
   handleRatmasStartCommand,
-  handleRatmasStartModal,
   handleRatmasOptOutButton,
 } from './commands/ratmas-start.command.js';
 import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
@@ -134,7 +133,6 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
         await handleWishlistCommand(interaction);
         await handlePairingsCommand(interaction, services.ratService);
       } else if (interaction.isModalSubmit()) {
-        await handleRatmasStartModal(interaction, ratmasDependencies);
         await handleWishlistModal(interaction, services.ratService);
       } else if (interaction.isButton()) {
         await handleRatmasOptOutButton(interaction, ratmasDependencies);

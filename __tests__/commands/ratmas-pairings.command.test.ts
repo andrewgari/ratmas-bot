@@ -4,12 +4,12 @@ import {
   RATMAS_PAIRINGS_COMMAND,
 } from '../../src/commands/ratmas-pairings.command.js';
 import { RatService } from '../../src/services/rat.service.js';
-import { RatmasEventStatus } from '../../src/types/ratmas.types.js';
+import { RatmasEventStatus, RatmasEvent, PairingResult } from '../../src/types/ratmas.types.js';
 
 describe('ratmas-pairings command', () => {
   const ratServiceMocks = {
-    getActiveEvent: jest.fn<() => Promise<any>>(),
-    generatePairings: jest.fn<() => Promise<any>>(),
+    getActiveEvent: jest.fn<() => Promise<RatmasEvent | null>>(),
+    generatePairings: jest.fn<() => Promise<PairingResult>>(),
   };
 
   beforeEach(() => {
