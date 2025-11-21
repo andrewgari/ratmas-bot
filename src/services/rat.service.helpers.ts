@@ -13,7 +13,12 @@ export function validateStatusTransition(
   newStatus: RatmasEventStatus
 ): void {
   const validTransitions: Record<RatmasEventStatus, RatmasEventStatus[]> = {
-    [RatmasEventStatus.OPEN]: [RatmasEventStatus.LOCKED, RatmasEventStatus.CANCELLED],
+    [RatmasEventStatus.OPEN]: [
+      RatmasEventStatus.WISHLIST,
+      RatmasEventStatus.LOCKED,
+      RatmasEventStatus.CANCELLED,
+    ],
+    [RatmasEventStatus.WISHLIST]: [RatmasEventStatus.LOCKED, RatmasEventStatus.CANCELLED],
     [RatmasEventStatus.LOCKED]: [
       RatmasEventStatus.MATCHED,
       RatmasEventStatus.OPEN,

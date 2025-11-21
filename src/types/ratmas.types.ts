@@ -3,6 +3,7 @@
  */
 export enum RatmasEventStatus {
   OPEN = 'open', // Accepting participants
+  WISHLIST = 'wishlist', // Wishlist submission period
   LOCKED = 'locked', // No new participants, not yet matched
   MATCHED = 'matched', // Pairings generated
   NOTIFIED = 'notified', // Participants notified of matches

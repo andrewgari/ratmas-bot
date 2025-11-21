@@ -12,6 +12,15 @@ import {
   handleRatmasOptOutButton,
 } from './commands/ratmas-start.command.js';
 import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
+import {
+  ensureWishlistCommand,
+  handleWishlistCommand,
+  handleWishlistModal,
+} from './commands/ratmas-wishlist.command.js';
+import {
+  ensurePairingsCommand,
+  handlePairingsCommand,
+} from './commands/ratmas-pairings.command.js';
 
 dotenv.config();
 
@@ -86,7 +95,13 @@ function registerReadyHandler(client: Client): void {
     try {
       const guilds = await client.guilds.fetch();
       await Promise.all(
-        [...guilds.values()].map((guild) => ensureRatmasStartCommand(client, guild.id))
+        [...guilds.values()].map((guild) =>
+          Promise.all([
+            ensureRatmasStartCommand(client, guild.id),
+            ensureWishlistCommand(client, guild.id),
+            ensurePairingsCommand(client, guild.id),
+          ])
+        )
       );
     } catch (error) {
       console.error('Failed to register Ratmas commands:', error);
@@ -97,7 +112,11 @@ function registerReadyHandler(client: Client): void {
 function registerGuildCreateHandler(client: Client): void {
   client.on('guildCreate', async (guild) => {
     try {
-      await ensureRatmasStartCommand(client, guild.id);
+      await Promise.all([
+        ensureRatmasStartCommand(client, guild.id),
+        ensureWishlistCommand(client, guild.id),
+        ensurePairingsCommand(client, guild.id),
+      ]);
     } catch (error) {
       console.error(`Failed to register Ratmas commands for guild ${guild.id}:`, error);
     }
@@ -112,8 +131,11 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
       if (interaction.isChatInputCommand()) {
         await handleRatmasStartCommand(interaction, ratmasDependencies);
         await handleRatmasEndCommand(interaction, ratmasDependencies);
+        await handleWishlistCommand(interaction);
+        await handlePairingsCommand(interaction, services.ratService);
       } else if (interaction.isModalSubmit()) {
         await handleRatmasStartModal(interaction, ratmasDependencies);
+        await handleWishlistModal(interaction, services.ratService);
       } else if (interaction.isButton()) {
         await handleRatmasOptOutButton(interaction, ratmasDependencies);
       }
