@@ -44,15 +44,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=pr,prefix=pr-,suffix=-{{sha}},enable=true,priority=100
+            type=ref,event=pr,prefix=pr-,suffix=-${{ steps.sha.outputs.short }},enable=true,priority=100
             type=ref,event=pr,prefix=pr-,suffix=-latest,enable=true,priority=90
-            type=sha,enable=true,priority=80,prefix=sha-
+            type=raw,value=sha-${{ steps.sha.outputs.short }},enable=${{ github.ref == 'refs/heads/main' }},priority=80
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }},priority=70
             type=raw,value=stable,enable=${{ github.event_name == 'release' }},priority=60
             type=semver,pattern=v{{version}},enable=${{ github.event_name == 'release' }},priority=50
