@@ -1,6 +1,123 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { jest } from '@jest/globals';
 
+class MockSlashCommandSubcommandBuilder {
+  private readonly data = { name: '', description: '', type: 1 };
+
+  setName(name: string): this {
+    this.data.name = name;
+    return this;
+  }
+
+  setDescription(description: string): this {
+    this.data.description = description;
+    return this;
+  }
+
+  toJSON(): { name: string; description: string; type: number } {
+    return this.data;
+  }
+}
+
+class MockSlashCommandBuilder {
+  private readonly data = { name: '', description: '', options: [] as unknown[] };
+
+  setName(name: string): this {
+    this.data.name = name;
+    return this;
+  }
+
+  setDescription(description: string): this {
+    this.data.description = description;
+    return this;
+  }
+
+  addSubcommand(callback: (sub: MockSlashCommandSubcommandBuilder) => unknown): this {
+    callback(new MockSlashCommandSubcommandBuilder());
+    return this;
+  }
+
+  toJSON(): { name: string; description: string; options: unknown[] } {
+    return this.data;
+  }
+}
+
+class MockModalBuilder {
+  readonly data = { custom_id: '', title: '', components: [] as unknown[] };
+
+  setCustomId(id: string): this {
+    this.data.custom_id = id;
+    return this;
+  }
+
+  setTitle(title: string): this {
+    this.data.title = title;
+    return this;
+  }
+
+  addComponents(...components: unknown[]): this {
+    this.data.components.push(...components);
+    return this;
+  }
+}
+
+class MockTextInputBuilder {
+  readonly data = {
+    custom_id: '',
+    label: '',
+    style: 0,
+    required: true,
+  };
+
+  setCustomId(id: string): this {
+    this.data.custom_id = id;
+    return this;
+  }
+
+  setLabel(label: string): this {
+    this.data.label = label;
+    return this;
+  }
+
+  setStyle(style: number): this {
+    this.data.style = style;
+    return this;
+  }
+
+  setRequired(required: boolean): this {
+    this.data.required = required;
+    return this;
+  }
+}
+
+class MockButtonBuilder {
+  readonly data = { custom_id: '', label: '', style: 0 };
+
+  setCustomId(id: string): this {
+    this.data.custom_id = id;
+    return this;
+  }
+
+  setLabel(label: string): this {
+    this.data.label = label;
+    return this;
+  }
+
+  setStyle(style: number): this {
+    this.data.style = style;
+    return this;
+  }
+}
+
+class MockActionRowBuilder<T> {
+  readonly components: T[] = [];
+
+  addComponents(...components: T[]): this {
+    this.components.push(...components);
+    return this;
+  }
+}
+
 // Mock discord.js before importing main
 jest.unstable_mockModule('discord.js', () => ({
   Client: jest.fn().mockImplementation(() => ({
@@ -9,28 +126,24 @@ jest.unstable_mockModule('discord.js', () => ({
     // @ts-expect-error
     login: jest.fn().mockResolvedValue('token'),
     user: { tag: 'TestBot#1234' },
+    application: {
+      commands: {
+        // @ts-expect-error
+        fetch: jest.fn().mockResolvedValue(new Map()),
+        // @ts-expect-error
+        create: jest.fn().mockResolvedValue({ id: 'command-id', name: 'ratmas' }),
+      },
+    },
     guilds: {
-      // @ts-expect-error
-      fetch: jest.fn().mockResolvedValue({
-        channels: {
-          // @ts-expect-error
-          create: jest.fn().mockResolvedValue({
-            id: 'mock-channel-id',
-            name: 'mock-channel',
-          }),
-          // @ts-expect-error
-          fetch: jest.fn().mockResolvedValue(new Map()),
-        },
-      }),
+      fetch: jest.fn(async () => new Map([['guild-1', { id: 'guild-1' }]])),
     },
     channels: {
-      // @ts-expect-error
-      fetch: jest.fn().mockResolvedValue({
+      fetch: jest.fn(async () => ({
         permissionOverwrites: {
           // @ts-expect-error
           edit: jest.fn().mockResolvedValue(undefined),
         },
-      }),
+      })),
     },
   })),
   GatewayIntentBits: {
@@ -60,10 +173,23 @@ jest.unstable_mockModule('discord.js', () => ({
     ManageRoles: 268435456n,
     Connect: 1048576n,
     Speak: 2097152n,
+    Administrator: 8n,
   },
   PermissionsBitField: jest.fn().mockImplementation(() => ({
     has: jest.fn().mockReturnValue(true),
   })),
+  SlashCommandBuilder: jest.fn().mockImplementation(() => new MockSlashCommandBuilder()),
+  SlashCommandSubcommandBuilder: jest
+    .fn()
+    .mockImplementation(() => new MockSlashCommandSubcommandBuilder()),
+  ModalBuilder: jest.fn().mockImplementation(() => new MockModalBuilder()),
+  TextInputBuilder: jest.fn().mockImplementation(() => new MockTextInputBuilder()),
+  ActionRowBuilder: jest
+    .fn()
+    .mockImplementation(() => new MockActionRowBuilder<MockButtonBuilder>()),
+  ButtonBuilder: jest.fn().mockImplementation(() => new MockButtonBuilder()),
+  ButtonStyle: { Primary: 1, Secondary: 2, Danger: 3 } as const,
+  TextInputStyle: { Short: 1, Paragraph: 2 } as const,
   EmbedBuilder: jest.fn().mockImplementation(() => ({
     setTitle: jest.fn().mockReturnThis(),
     setDescription: jest.fn().mockReturnThis(),

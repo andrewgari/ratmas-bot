@@ -15,6 +15,7 @@ export default {
           skipLibCheck: true,
           noImplicitAny: false,
           strictNullChecks: false,
+          moduleResolution: 'node',
         },
       },
     ],
