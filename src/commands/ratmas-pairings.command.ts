@@ -51,7 +51,7 @@ export async function handlePairingsCommand(
       });
     } else {
       await interaction.reply({
-        content: `Failed to generate pairings: ${result.error || 'Unknown error'}`,
+        content: `Failed to generate pairings: ${result.error || 'No error message provided'}`,
         ephemeral: true,
       });
     }

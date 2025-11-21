@@ -79,7 +79,7 @@ export async function handleWishlistModal(
     const participant = await ratService.getOrCreateParticipant(
       event.id,
       interaction.user.id,
-      interaction.member?.user?.username || interaction.user.username
+      interaction.member?.user.username || interaction.user.username
     );
     await ratService.updateParticipant(participant.id, { wishlistUrl });
     await interaction.reply({ content: 'Your wishlist has been saved!', ephemeral: true });
