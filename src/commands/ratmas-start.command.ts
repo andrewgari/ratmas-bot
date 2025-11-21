@@ -23,6 +23,7 @@ export const RATMAS_START_MODAL_ID = 'ratmas-start-schedule-modal';
 export const RATMAS_OPT_OUT_BUTTON_ID = 'ratmas-opt-out-button';
 
 const START_SUBCOMMAND = 'start';
+const END_SUBCOMMAND = 'end';
 
 interface RatmasStartDependencies {
   ratService: RatService;
@@ -38,12 +39,16 @@ export async function ensureRatmasStartCommand(client: Client, guildId: string):
   const startSubcommandOption = buildStartSubcommand(
     new SlashCommandSubcommandBuilder()
   ).toJSON() as unknown as ApplicationCommandOptionData;
+  const endSubcommandOption = buildEndSubcommand(
+    new SlashCommandSubcommandBuilder()
+  ).toJSON() as unknown as ApplicationCommandOptionData;
 
   if (!existing) {
     const command = new SlashCommandBuilder()
       .setName(RATMAS_COMMAND_NAME)
       .setDescription('Manage Ratmas events')
-      .addSubcommand((sub) => buildStartSubcommand(sub));
+      .addSubcommand((sub) => buildStartSubcommand(sub))
+      .addSubcommand((sub) => buildEndSubcommand(sub));
 
     await client.application.commands.create(command.toJSON(), guildId);
     return;
@@ -52,12 +57,16 @@ export async function ensureRatmasStartCommand(client: Client, guildId: string):
   const hasStart = existing.options.some(
     (option) => option.name === START_SUBCOMMAND && option.type === 1
   );
+  const hasEnd = existing.options.some(
+    (option) => option.name === END_SUBCOMMAND && option.type === 1
+  );
 
-  if (!hasStart) {
+  if (!hasStart || !hasEnd) {
     const options = existing.options.map(
       (option) => option as unknown as ApplicationCommandOptionData
     );
-    options.push(startSubcommandOption);
+    if (!hasStart) options.push(startSubcommandOption);
+    if (!hasEnd) options.push(endSubcommandOption);
 
     await existing.edit({ description: existing.description, options });
   }
@@ -72,7 +81,10 @@ export async function handleRatmasStartCommand(
 
   const guard = await validateInteraction(interaction, deps.ratService);
   if (!guard.ok) {
-    await interaction.reply({ content: guard.message, ephemeral: true });
+    await interaction.reply({
+      content: 'message' in guard ? guard.message : 'Error',
+      ephemeral: true,
+    });
     return;
   }
 
@@ -87,7 +99,10 @@ export async function handleRatmasStartModal(
 
   const guard = await validateInteraction(interaction, deps.ratService);
   if (!guard.ok) {
-    await interaction.reply({ content: guard.message, ephemeral: true });
+    await interaction.reply({
+      content: 'message' in guard ? guard.message : 'Error',
+      ephemeral: true,
+    });
     return;
   }
 
@@ -201,4 +216,10 @@ function buildStartSubcommand(
   subcommand: SlashCommandSubcommandBuilder
 ): SlashCommandSubcommandBuilder {
   return subcommand.setName(START_SUBCOMMAND).setDescription("Start this year's Ratmas");
+}
+
+function buildEndSubcommand(
+  subcommand: SlashCommandSubcommandBuilder
+): SlashCommandSubcommandBuilder {
+  return subcommand.setName(END_SUBCOMMAND).setDescription('Complete the current Ratmas event');
 }

@@ -11,6 +11,7 @@ import type {
 import { RatmasEventStatus } from '../types/ratmas.types.js';
 import { UserService } from './user.service.js';
 import { MessageService } from './message.service.js';
+import { ChannelService } from './channel.service.js';
 import { validateStatusTransition, shuffleArray } from './rat.service.helpers.js';
 import {
   calculateEventTiming,
@@ -27,16 +28,20 @@ import { RatmasRepository } from '../repositories/ratmas.repository.js';
 export class RatService {
   private readonly userService: UserService;
   private readonly messageService: MessageService;
+  private readonly channelService: ChannelService;
   private readonly repository: RatmasRepository;
 
+  // eslint-disable-next-line max-params
   constructor(
     _client: Client,
     userService: UserService,
     messageService: MessageService,
+    channelService: ChannelService,
     repository: RatmasRepository = new RatmasRepository()
   ) {
     this.userService = userService;
     this.messageService = messageService;
+    this.channelService = channelService;
     this.repository = repository;
   }
 
@@ -77,6 +82,61 @@ export class RatService {
 
   async cancelEvent(eventId: string): Promise<RatmasEvent> {
     return this.updateEventStatus(eventId, RatmasEventStatus.CANCELLED);
+  }
+
+  async completeEvent(
+    eventId: string,
+    options: { sendAnnouncement?: boolean; archiveChannels?: boolean } = {}
+  ): Promise<RatmasEvent> {
+    const event = await this.repository.findEventById(eventId);
+    if (!event) throw new Error(`Event ${eventId} not found`);
+
+    validateStatusTransition(event.status, RatmasEventStatus.COMPLETED);
+
+    await this.sendCompletionAnnouncement(event, options.sendAnnouncement);
+    await this.archiveAnnouncementChannel(event, options.archiveChannels);
+
+    return this.repository.updateEventStatus(eventId, RatmasEventStatus.COMPLETED);
+  }
+
+  private async sendCompletionAnnouncement(
+    event: RatmasEvent,
+    shouldSend: boolean = true
+  ): Promise<void> {
+    if (!shouldSend || !event.config.announcementChannelId) return;
+
+    try {
+      const participants = await this.repository.listParticipants(event.id);
+      const participantLabel = participants.length === 1 ? 'participant' : 'participants';
+      await this.messageService.sendEmbed(event.config.announcementChannelId, {
+        title: '🎄 Ratmas Has Ended! 🎄',
+        description: `Thank you to all ${participants.length} ${participantLabel} for making this Ratmas special! We hope everyone enjoyed their gifts and the spirit of giving. Until next year! 🐀🎁`,
+        color: 0x00ff00,
+        timestamp: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to send completion announcement:', error);
+    }
+  }
+
+  private async archiveAnnouncementChannel(
+    event: RatmasEvent,
+    shouldArchive: boolean = true
+  ): Promise<void> {
+    if (!shouldArchive || !event.config.announcementChannelId || !event.config.archivedCategoryId)
+      return;
+
+    try {
+      const result = await this.channelService.moveChannelToCategory(
+        event.config.announcementChannelId,
+        event.config.archivedCategoryId
+      );
+      if (!result.success) {
+        console.error('Failed to archive announcement channel:', result.error);
+      }
+    } catch (error) {
+      console.error('Failed to archive announcement channel:', error);
+    }
   }
 
   // ==================== PARTICIPANT MANAGEMENT ====================

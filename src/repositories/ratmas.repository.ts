@@ -37,6 +37,7 @@ export class RatmasRepository {
         eventEndDate: options.eventEndDate,
         timezone: options.timezone,
         announcementChannelId: options.announcementChannelId ?? null,
+        archivedCategoryId: options.archivedCategoryId ?? null,
       } as never,
     });
 
@@ -205,7 +206,10 @@ export class RatmasRepository {
 
 function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
   const status = validateStatus(record.status);
-  const recordWithEndDate = record as PrismaRatmasEvent & { eventEndDate?: Date | null };
+  const recordWithEndDate = record as PrismaRatmasEvent & {
+    eventEndDate?: Date | null;
+    archivedCategoryId?: string | null;
+  };
   return {
     id: record.id,
     guildId: record.guildId,
@@ -218,6 +222,7 @@ function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
       eventEndDate: recordWithEndDate.eventEndDate ?? undefined,
       timezone: record.timezone,
       announcementChannelId: record.announcementChannelId ?? undefined,
+      archivedCategoryId: recordWithEndDate.archivedCategoryId ?? undefined,
     },
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,

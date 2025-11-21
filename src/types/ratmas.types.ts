@@ -21,6 +21,7 @@ export interface RatmasEventConfig {
   eventEndDate?: Date; // When Ratmas concludes for the season
   timezone: string; // IANA timezone (e.g., "America/New_York")
   announcementChannelId?: string; // Optional channel for event announcements
+  archivedCategoryId?: string; // Optional category ID to move channels when event completes
 }
 
 /**
@@ -77,6 +78,7 @@ export interface CreateEventOptions {
   eventEndDate: Date;
   timezone: string;
   announcementChannelId?: string;
+  archivedCategoryId?: string; // Category to move channels to when event completes
 }
 
 /**

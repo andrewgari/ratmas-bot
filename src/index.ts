@@ -11,6 +11,7 @@ import {
   handleRatmasStartModal,
   handleRatmasOptOutButton,
 } from './commands/ratmas-start.command.js';
+import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
 
 dotenv.config();
 
@@ -64,7 +65,7 @@ function initializeServices(client: Client): AppServices {
   const messageService = new MessageService(client);
   const channelService = new ChannelService(client);
   const roleService = new RoleService(client);
-  const ratService = new RatService(client, userService, messageService);
+  const ratService = new RatService(client, userService, messageService, channelService);
 
   return {
     userService,
@@ -110,6 +111,7 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
     try {
       if (interaction.isChatInputCommand()) {
         await handleRatmasStartCommand(interaction, ratmasDependencies);
+        await handleRatmasEndCommand(interaction, ratmasDependencies);
       } else if (interaction.isModalSubmit()) {
         await handleRatmasStartModal(interaction, ratmasDependencies);
       } else if (interaction.isButton()) {
@@ -140,10 +142,7 @@ function getRatmasDependencies(services: AppServices): RatmasCommandDependencies
 /**
  * Handle incoming message commands
  */
-async function handleCommands(
-  message: Message,
-  services: Pick<AppServices, 'userService' | 'messageService' | 'channelService' | 'roleService'>
-): Promise<void> {
+async function handleCommands(message: Message, services: AppServices): Promise<void> {
   if (message.content === '!ping') {
     message.reply('Pong!');
     return;
