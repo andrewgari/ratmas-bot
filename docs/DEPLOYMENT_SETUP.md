@@ -120,8 +120,9 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
    ```
 
 4. Test Docker Compose:
+
    ```bash
-   docker-compose version
+   docker compose version
    ```
 
 ## Step 5: Test the Deployment
@@ -134,9 +135,10 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
 2. Monitor the workflow execution in the GitHub Actions UI
 
 3. On your server, verify the bot is running:
+
    ```bash
-   docker-compose ps
-   docker-compose logs -f
+   docker compose ps
+   docker compose logs -f
    ```
 
 ## Troubleshooting
@@ -193,7 +195,7 @@ If you need to deploy manually:
 ```bash
 cd ~/ratmas-bot
 git pull origin main
-docker-compose pull
-docker-compose down
-docker-compose up -d
+docker compose pull
+docker compose down
+docker compose up -d
 ```
