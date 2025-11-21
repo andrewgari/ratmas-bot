@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  github-runner:
+    image: myoung34/github-runner:latest
+    container_name: github-actions-runner
+    restart: unless-stopped
+    environment:
+      REPO_URL: https://github.com/andrewgari/ratmas-bot
+      RUNNER_NAME: unraid-runner
+      RUNNER_TOKEN: ${RUNNER_TOKEN} # Set this in .env or pass when running
+      RUNNER_SCOPE: repo
+      RUNNER_WORKDIR: /runner/_work
+      RUNNER_GROUP: Default
+      LABELS: self-hosted,Linux,X64
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/runner:/tmp/runner
+      - ./runner-data:/runner/_work
+      - ./runner-persistent:/runner/persistent_files
+    networks:
+      - github-runner-net
+
+networks:
+  github-runner-net:
+    driver: bridge

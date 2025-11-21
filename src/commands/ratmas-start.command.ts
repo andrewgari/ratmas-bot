@@ -123,7 +123,6 @@ export async function handleRatmasStartModal(
       purchaseDeadline: schedule.purchaseDeadline,
       revealDate: schedule.revealDate,
       eventEndDate: schedule.eventEndDate,
-      timezone: schedule.timezone,
       announcementChannelId: channelInfo.channelId,
     });
 

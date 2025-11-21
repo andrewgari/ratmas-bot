@@ -15,7 +15,7 @@ import { ChannelService } from '../services/channel.service.js';
 import {
   RatmasSchedule,
   parseRatmasSchedule,
-  formatDateForTimezone,
+  toDiscordTimestamp,
   calculateAssignmentAnnouncementDate,
 } from '../utils/date.utils.js';
 
@@ -24,37 +24,35 @@ export const ScheduleFieldIds = {
   endDate: 'ratmas-end-date',
   revealDate: 'ratmas-reveal-date',
   purchaseDeadline: 'ratmas-purchase-deadline',
-  timezone: 'ratmas-timezone',
 } as const;
 
 export function buildScheduleModal(modalId: string): ModalBuilder {
-  const modal = new ModalBuilder().setCustomId(modalId).setTitle('Ratmas Schedule');
+  const modal = new ModalBuilder().setCustomId(modalId).setTitle('Ratmas Schedule (UTC)');
 
   const fields = [
     new TextInputBuilder()
       .setCustomId(ScheduleFieldIds.startDate)
-      .setLabel('Start date (YYYY-MM-DD)')
+      .setLabel('Start date (YYYY-MM-DD) UTC')
       .setStyle(TextInputStyle.Short)
+      .setPlaceholder('e.g., 2025-12-01')
       .setRequired(true),
     new TextInputBuilder()
       .setCustomId(ScheduleFieldIds.endDate)
-      .setLabel('End date (YYYY-MM-DD)')
+      .setLabel('End date (YYYY-MM-DD) UTC')
       .setStyle(TextInputStyle.Short)
+      .setPlaceholder('e.g., 2025-12-26')
       .setRequired(true),
     new TextInputBuilder()
       .setCustomId(ScheduleFieldIds.revealDate)
-      .setLabel('Opening day (YYYY-MM-DD)')
+      .setLabel('Opening day (YYYY-MM-DD) UTC')
       .setStyle(TextInputStyle.Short)
+      .setPlaceholder('e.g., 2025-12-26')
       .setRequired(true),
     new TextInputBuilder()
       .setCustomId(ScheduleFieldIds.purchaseDeadline)
-      .setLabel('Purchase deadline (YYYY-MM-DD)')
+      .setLabel('Purchase deadline (YYYY-MM-DD) UTC')
       .setStyle(TextInputStyle.Short)
-      .setRequired(true),
-    new TextInputBuilder()
-      .setCustomId(ScheduleFieldIds.timezone)
-      .setLabel('Timezone (e.g., America/Chicago)')
-      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('e.g., 2025-12-16')
       .setRequired(true),
   ];
 
@@ -62,8 +60,7 @@ export function buildScheduleModal(modalId: string): ModalBuilder {
     new ActionRowBuilder<TextInputBuilder>().addComponents(fields[0]!),
     new ActionRowBuilder<TextInputBuilder>().addComponents(fields[1]!),
     new ActionRowBuilder<TextInputBuilder>().addComponents(fields[2]!),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[3]!),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[4]!)
+    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[3]!)
   );
 
   return modal;
@@ -75,7 +72,6 @@ export function parseScheduleFromModal(interaction: ModalSubmitInteraction): Rat
     endDate: interaction.fields.getTextInputValue(ScheduleFieldIds.endDate),
     revealDate: interaction.fields.getTextInputValue(ScheduleFieldIds.revealDate),
     purchaseDeadline: interaction.fields.getTextInputValue(ScheduleFieldIds.purchaseDeadline),
-    timezone: interaction.fields.getTextInputValue(ScheduleFieldIds.timezone),
   });
 }
 
@@ -91,7 +87,6 @@ export async function prepareRatmasChannel(params: {
   const channels = await guild.channels.fetch();
 
   const yearLabel = DateTime.fromJSDate(schedule.eventStartDate, { zone: 'utc' })
-    .setZone(schedule.timezone)
     .year.toString();
   const channelName = `ratmas-${yearLabel}`;
 
@@ -148,19 +143,16 @@ export async function publishWelcomeMessage(params: {
     throw new Error('Ratmas channel is not a text channel.');
   }
 
-  const startLabel = formatDateForTimezone(schedule.eventStartDate, schedule.timezone);
-  const endLabel = formatDateForTimezone(schedule.eventEndDate, schedule.timezone);
-  const revealLabel = formatDateForTimezone(schedule.revealDate, schedule.timezone);
-  const purchaseLabel = formatDateForTimezone(schedule.purchaseDeadline, schedule.timezone);
-  const assignmentLabel = calculateAssignmentAnnouncementDate(
-    schedule.eventStartDate,
-    schedule.timezone
-  );
+  const startLabel = toDiscordTimestamp(schedule.eventStartDate, 'D');
+  const endLabel = toDiscordTimestamp(schedule.eventEndDate, 'D');
+  const revealLabel = toDiscordTimestamp(schedule.revealDate, 'D');
+  const purchaseLabel = toDiscordTimestamp(schedule.purchaseDeadline, 'D');
+  const assignmentLabel = calculateAssignmentAnnouncementDate(schedule.eventStartDate);
 
   const message = [
     `🎄 **Ratmas ${yearLabel} has begun!**`,
-    `Ratmas runs from **${startLabel}** through **${endLabel}** (${schedule.timezone}).`,
-    `Gift buying wraps up by **${purchaseLabel}**, and we'll open gifts on **${revealLabel}**.`,
+    `Ratmas runs from ${startLabel} through ${endLabel} (UTC).`,
+    `Gift buying wraps up by ${purchaseLabel}, and we'll open gifts on ${revealLabel}.`,
     `Secret Santas will be assigned via DM in five days (${assignmentLabel}).`,
     'If you want to opt out, use the button below to remove the Ratmas role.',
   ].join('\n');

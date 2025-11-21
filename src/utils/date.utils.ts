@@ -5,7 +5,6 @@ export interface RatmasScheduleInput {
   endDate: string;
   revealDate: string;
   purchaseDeadline: string;
-  timezone: string;
 }
 
 export interface RatmasSchedule {
@@ -13,62 +12,46 @@ export interface RatmasSchedule {
   eventEndDate: Date;
   revealDate: Date;
   purchaseDeadline: Date;
-  timezone: string;
 }
 
-export function validateTimezone(timezone: string): boolean {
-  if (!timezone.trim()) {
-    return false;
-  }
-
-  return DateTime.now().setZone(timezone).isValid;
+/**
+ * Converts a Date object to Discord timestamp markdown format
+ * @param date - The date to format
+ * @param style - Discord timestamp style (t=short time, T=long time, d=short date, D=long date, f=short datetime, F=long datetime, R=relative)
+ * @returns Discord timestamp markdown string
+ */
+export function toDiscordTimestamp(date: Date, style: 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R' = 'D'): string {
+  const timestamp = Math.floor(date.getTime() / 1000);
+  return `<t:${timestamp}:${style}>`;
 }
 
 export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule {
-  const timezone = input.timezone.trim();
-  if (!validateTimezone(timezone)) {
-    throw new Error('Please provide a valid IANA timezone (e.g., America/Los_Angeles).');
-  }
-
-  const eventStart = parseDateField(input.startDate, timezone, 'Start date', 'start');
-  const eventEnd = parseDateField(input.endDate, timezone, 'End date', 'end');
-  const reveal = parseDateField(input.revealDate, timezone, 'Opening day', 'start');
-  const purchaseDeadline = parseDateField(
+  const eventStart = parseDateFieldUTC(input.startDate, 'Start date', 'start');
+  const eventEnd = parseDateFieldUTC(input.endDate, 'End date', 'end');
+  const reveal = parseDateFieldUTC(input.revealDate, 'Opening day', 'start');
+  const purchaseDeadline = parseDateFieldUTC(
     input.purchaseDeadline,
-    timezone,
     'Purchase deadline',
     'end'
   );
 
   return {
-    eventStartDate: eventStart.toUTC().toJSDate(),
-    eventEndDate: eventEnd.toUTC().toJSDate(),
-    revealDate: reveal.toUTC().toJSDate(),
-    purchaseDeadline: purchaseDeadline.toUTC().toJSDate(),
-    timezone,
+    eventStartDate: eventStart.toJSDate(),
+    eventEndDate: eventEnd.toJSDate(),
+    revealDate: reveal.toJSDate(),
+    purchaseDeadline: purchaseDeadline.toJSDate(),
   };
 }
 
-export function formatDateForTimezone(date: Date, timezone: string): string {
-  return DateTime.fromJSDate(date, { zone: 'utc' })
-    .setZone(timezone)
-    .toLocaleString(DateTime.DATE_HUGE);
-}
-
-export function calculateAssignmentAnnouncementDate(
-  eventStartDate: Date,
-  timezone: string
-): string {
+export function calculateAssignmentAnnouncementDate(eventStartDate: Date): string {
   const assignmentDate = DateTime.fromJSDate(eventStartDate, { zone: 'utc' })
-    .setZone(timezone)
     .plus({ days: 5 });
 
-  return assignmentDate.toLocaleString(DateTime.DATE_HUGE);
+  return toDiscordTimestamp(assignmentDate.toJSDate(), 'D');
 }
 
-function parseDateField(
+function parseDateFieldUTC(
   value: string,
-  timezone: string,
   label: string,
   boundary: 'start' | 'end'
 ): DateTime {
@@ -77,7 +60,7 @@ function parseDateField(
     throw new Error(`${label} is required.`);
   }
 
-  const parsed = DateTime.fromISO(trimmed, { zone: timezone });
+  const parsed = DateTime.fromISO(trimmed, { zone: 'utc' });
   if (!parsed.isValid) {
     throw new Error(`${label} must be in YYYY-MM-DD format.`);
   }

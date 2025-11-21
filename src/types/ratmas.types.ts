@@ -15,11 +15,10 @@ export enum RatmasEventStatus {
  */
 export interface RatmasEventConfig {
   ratmasRoleId: string; // Discord role ID for Ratmas participants (links everyone together)
-  eventStartDate: Date; // When the event begins
-  purchaseDeadline: Date; // Last day to purchase gifts
-  revealDate: Date; // When secret santas are revealed
-  eventEndDate?: Date; // When Ratmas concludes for the season
-  timezone: string; // IANA timezone (e.g., "America/New_York")
+  eventStartDate: Date; // When the event begins (UTC)
+  purchaseDeadline: Date; // Last day to purchase gifts (UTC)
+  revealDate: Date; // When secret santas are revealed (UTC)
+  eventEndDate?: Date; // When Ratmas concludes for the season (UTC)
   announcementChannelId?: string; // Optional channel for event announcements
   archivedCategoryId?: string; // Optional category ID to move channels when event completes
 }
@@ -76,7 +75,6 @@ export interface CreateEventOptions {
   purchaseDeadline: Date;
   revealDate: Date;
   eventEndDate: Date;
-  timezone: string;
   announcementChannelId?: string;
   archivedCategoryId?: string; // Category to move channels to when event completes
 }
@@ -107,5 +105,5 @@ export interface EventTiming {
   daysUntilPurchaseDeadline: number;
   daysUntilReveal: number;
   daysUntilEnd?: number;
-  currentDateInTimezone: Date;
+  currentDateInTimezone: Date; // Actually UTC, kept for backwards compatibility
 }

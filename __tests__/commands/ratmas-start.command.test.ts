@@ -89,10 +89,9 @@ describe('ratmas-start command integration', () => {
 
     const fieldValues: Record<string, string> = {
       'ratmas-start-date': '2025-12-01',
-      'ratmas-end-date': '2025-12-25',
+      'ratmas-end-date': '2025-12-26',
       'ratmas-reveal-date': '2025-12-26',
-      'ratmas-purchase-deadline': '2025-12-15',
-      'ratmas-timezone': 'America/New_York',
+      'ratmas-purchase-deadline': '2025-12-16',
     };
 
     const interaction = {
@@ -126,18 +125,16 @@ describe('ratmas-start command integration', () => {
       eventEndDate: Date;
       revealDate: Date;
       purchaseDeadline: Date;
-      timezone: string;
     };
     expect(eventPayload).toMatchObject({
       guildId: 'guild-123',
       ratmasRoleId: 'rat-role',
       announcementChannelId: 'ratmas-channel-id',
-      timezone: 'America/New_York',
     });
-    expect(eventPayload.eventStartDate.toISOString()).toBe('2025-12-01T05:00:00.000Z');
-    expect(eventPayload.eventEndDate.toISOString()).toBe('2025-12-26T04:59:59.999Z');
-    expect(eventPayload.revealDate.toISOString()).toBe('2025-12-26T05:00:00.000Z');
-    expect(eventPayload.purchaseDeadline.toISOString()).toBe('2025-12-16T04:59:59.999Z');
+    expect(eventPayload.eventStartDate.toISOString()).toBe('2025-12-01T00:00:00.000Z');
+    expect(eventPayload.eventEndDate.toISOString()).toBe('2025-12-26T23:59:59.999Z');
+    expect(eventPayload.revealDate.toISOString()).toBe('2025-12-26T00:00:00.000Z');
+    expect(eventPayload.purchaseDeadline.toISOString()).toBe('2025-12-16T23:59:59.999Z');
 
     expect(send).toHaveBeenCalled();
     const message = send.mock.calls[0]?.[0] as { content: string };

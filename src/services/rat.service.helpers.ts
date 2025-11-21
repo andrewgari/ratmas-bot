@@ -1,4 +1,5 @@
 import { RatmasEvent, RatmasParticipant, RatmasEventStatus } from '../types/ratmas.types.js';
+import { toDiscordTimestamp } from '../utils/date.utils.js';
 
 /**
  * Helper utilities for RatService
@@ -59,7 +60,7 @@ export function buildPairingNotificationMessage(
   santa: RatmasParticipant,
   recipient: RatmasParticipant
 ): string {
-  const { purchaseDeadline, revealDate, timezone } = event.config;
+  const { purchaseDeadline, revealDate } = event.config;
 
   let message = `🎄 **Ratmas Secret Santa Assignment** 🎁\n\n`;
   message += `Hello ${santa.displayName}!\n\n`;
@@ -71,9 +72,9 @@ export function buildPairingNotificationMessage(
     message += `They haven't provided a wishlist yet. Stay tuned!\n\n`;
   }
 
-  message += `**Important Dates** (${timezone}):\n`;
-  message += `• Purchase by: ${purchaseDeadline.toLocaleDateString()}\n`;
-  message += `• Reveal date: ${revealDate.toLocaleDateString()}\n\n`;
+  message += `**Important Dates** (UTC - will display in your local time):\n`;
+  message += `• Purchase by: ${toDiscordTimestamp(purchaseDeadline, 'D')}\n`;
+  message += `• Reveal date: ${toDiscordTimestamp(revealDate, 'D')}\n\n`;
   message += `Keep this assignment secret! 🤫\n`;
   message += `Happy gifting! 🎅`;
 
