@@ -4,76 +4,15 @@ import {
   ButtonStyle,
   ChannelType,
   Client,
-  ModalBuilder,
-  ModalSubmitInteraction,
   TextChannel,
-  TextInputBuilder,
-  TextInputStyle,
 } from 'discord.js';
 import { DateTime } from 'luxon';
 import { ChannelService } from '../services/channel.service.js';
 import {
   RatmasSchedule,
-  parseRatmasSchedule,
   toDiscordTimestamp,
   calculateAssignmentAnnouncementDate,
 } from '../utils/date.utils.js';
-
-export const ScheduleFieldIds = {
-  startDate: 'ratmas-start-date',
-  endDate: 'ratmas-end-date',
-  revealDate: 'ratmas-reveal-date',
-  purchaseDeadline: 'ratmas-purchase-deadline',
-} as const;
-
-export function buildScheduleModal(modalId: string): ModalBuilder {
-  const modal = new ModalBuilder().setCustomId(modalId).setTitle('Ratmas Schedule (UTC)');
-
-  const fields = [
-    new TextInputBuilder()
-      .setCustomId(ScheduleFieldIds.startDate)
-      .setLabel('Start date (YYYY-MM-DD) UTC')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 2025-12-01')
-      .setRequired(true),
-    new TextInputBuilder()
-      .setCustomId(ScheduleFieldIds.endDate)
-      .setLabel('End date (YYYY-MM-DD) UTC')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 2025-12-26')
-      .setRequired(true),
-    new TextInputBuilder()
-      .setCustomId(ScheduleFieldIds.revealDate)
-      .setLabel('Opening day (YYYY-MM-DD) UTC')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 2025-12-26')
-      .setRequired(true),
-    new TextInputBuilder()
-      .setCustomId(ScheduleFieldIds.purchaseDeadline)
-      .setLabel('Purchase deadline (YYYY-MM-DD) UTC')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 2025-12-16')
-      .setRequired(true),
-  ];
-
-  modal.addComponents(
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[0]!),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[1]!),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[2]!),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(fields[3]!)
-  );
-
-  return modal;
-}
-
-export function parseScheduleFromModal(interaction: ModalSubmitInteraction): RatmasSchedule {
-  return parseRatmasSchedule({
-    startDate: interaction.fields.getTextInputValue(ScheduleFieldIds.startDate),
-    endDate: interaction.fields.getTextInputValue(ScheduleFieldIds.endDate),
-    revealDate: interaction.fields.getTextInputValue(ScheduleFieldIds.revealDate),
-    purchaseDeadline: interaction.fields.getTextInputValue(ScheduleFieldIds.purchaseDeadline),
-  });
-}
 
 export async function prepareRatmasChannel(params: {
   client: Client;

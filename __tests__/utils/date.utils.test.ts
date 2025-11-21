@@ -12,12 +12,56 @@ describe('date.utils', () => {
       endDate: '2025-12-25',
       revealDate: '2025-12-26',
       purchaseDeadline: '2025-12-15',
+      timezone: 'UTC',
     });
 
     expect(schedule.eventStartDate.toISOString()).toBe('2025-12-01T00:00:00.000Z');
     expect(schedule.eventEndDate.toISOString()).toBe('2025-12-25T23:59:59.999Z');
     expect(schedule.revealDate.toISOString()).toBe('2025-12-26T00:00:00.000Z');
     expect(schedule.purchaseDeadline.toISOString()).toBe('2025-12-15T23:59:59.999Z');
+  });
+
+  it('converts timezone dates to UTC correctly', () => {
+    const schedule = parseRatmasSchedule({
+      startDate: '2025-12-01',
+      endDate: '2025-12-25',
+      revealDate: '2025-12-26',
+      purchaseDeadline: '2025-12-15',
+      timezone: 'America/New_York', // EST/EDT is UTC-5/-4
+    });
+
+    // 2025-12-01 00:00:00 EST = 2025-12-01 05:00:00 UTC (EST is UTC-5)
+    expect(schedule.eventStartDate.toISOString()).toBe('2025-12-01T05:00:00.000Z');
+    // 2025-12-25 23:59:59.999 EST = 2025-12-26 04:59:59.999 UTC
+    expect(schedule.eventEndDate.toISOString()).toBe('2025-12-26T04:59:59.999Z');
+    // 2025-12-26 00:00:00 EST = 2025-12-26 05:00:00 UTC
+    expect(schedule.revealDate.toISOString()).toBe('2025-12-26T05:00:00.000Z');
+    // 2025-12-15 23:59:59.999 EST = 2025-12-16 04:59:59.999 UTC
+    expect(schedule.purchaseDeadline.toISOString()).toBe('2025-12-16T04:59:59.999Z');
+  });
+
+  it('defaults to UTC when timezone is not provided', () => {
+    const schedule = parseRatmasSchedule({
+      startDate: '2025-12-01',
+      endDate: '2025-12-25',
+      revealDate: '2025-12-26',
+      purchaseDeadline: '2025-12-15',
+    });
+
+    expect(schedule.eventStartDate.toISOString()).toBe('2025-12-01T00:00:00.000Z');
+    expect(schedule.eventEndDate.toISOString()).toBe('2025-12-25T23:59:59.999Z');
+  });
+
+  it('throws when provided an invalid timezone', () => {
+    expect(() =>
+      parseRatmasSchedule({
+        startDate: '2025-12-01',
+        endDate: '2025-12-25',
+        revealDate: '2025-12-26',
+        purchaseDeadline: '2025-12-15',
+        timezone: 'Invalid/Timezone',
+      })
+    ).toThrow('Invalid timezone');
   });
 
   it('throws when provided an invalid date', () => {
@@ -27,6 +71,7 @@ describe('date.utils', () => {
         endDate: '2025-12-25',
         revealDate: '2025-12-26',
         purchaseDeadline: '2025-12-15',
+        timezone: 'UTC',
       })
     ).toThrow('Start date must be in YYYY-MM-DD format');
   });
