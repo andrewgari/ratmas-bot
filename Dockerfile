@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.7
 FROM node:20-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 FROM base AS deps
