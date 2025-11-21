@@ -163,7 +163,7 @@ Your workflow needs these secrets to create the `.env` file for your bot. Add th
 
 ### Container fails to start
 
-- Check logs: `docker-compose logs`
+- Check logs: `docker compose logs`
 - Verify the `.env` file was created: `cat .env`
 - Ensure the database directory exists: `ls -la data/`
 
