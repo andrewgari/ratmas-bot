@@ -12,6 +12,12 @@ import {
   handleRatmasOptOutButton,
 } from './commands/ratmas-start.command.js';
 import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
+import {
+  buildWishlistCommand,
+  handleWishlistCommand,
+  handleWishlistModal,
+  RATMAS_WISHLIST_COMMAND,
+} from './commands/ratmas-wishlist.command.js';
 
 dotenv.config();
 
@@ -76,6 +82,18 @@ function initializeServices(client: Client): AppServices {
   };
 }
 
+async function ensureWishlistCommand(client: Client, guildId: string): Promise<void> {
+  if (!client.application) return;
+
+  const commands = await client.application.commands.fetch({ guildId });
+  const existing = commands.find((command) => command.name === RATMAS_WISHLIST_COMMAND);
+
+  if (!existing) {
+    const command = buildWishlistCommand();
+    await client.application.commands.create(command.toJSON(), guildId);
+  }
+}
+
 function registerReadyHandler(client: Client): void {
   client.once('ready', async () => {
     // eslint-disable-next-line no-console
@@ -86,7 +104,10 @@ function registerReadyHandler(client: Client): void {
     try {
       const guilds = await client.guilds.fetch();
       await Promise.all(
-        [...guilds.values()].map((guild) => ensureRatmasStartCommand(client, guild.id))
+        [...guilds.values()].map((guild) => Promise.all([
+          ensureRatmasStartCommand(client, guild.id),
+          ensureWishlistCommand(client, guild.id)
+        ]))
       );
     } catch (error) {
       console.error('Failed to register Ratmas commands:', error);
@@ -97,7 +118,10 @@ function registerReadyHandler(client: Client): void {
 function registerGuildCreateHandler(client: Client): void {
   client.on('guildCreate', async (guild) => {
     try {
-      await ensureRatmasStartCommand(client, guild.id);
+      await Promise.all([
+        ensureRatmasStartCommand(client, guild.id),
+        ensureWishlistCommand(client, guild.id)
+      ]);
     } catch (error) {
       console.error(`Failed to register Ratmas commands for guild ${guild.id}:`, error);
     }
@@ -112,8 +136,10 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
       if (interaction.isChatInputCommand()) {
         await handleRatmasStartCommand(interaction, ratmasDependencies);
         await handleRatmasEndCommand(interaction, ratmasDependencies);
+        await handleWishlistCommand(interaction);
       } else if (interaction.isModalSubmit()) {
         await handleRatmasStartModal(interaction, ratmasDependencies);
+        await handleWishlistModal(interaction, services.ratService);
       } else if (interaction.isButton()) {
         await handleRatmasOptOutButton(interaction, ratmasDependencies);
       }
