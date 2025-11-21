@@ -33,6 +33,18 @@ describe('ratmas-wishlist command', () => {
     expect(modal?.data?.custom_id).toBe(RATMAS_WISHLIST_MODAL_ID);
   });
 
+  it('ignores non-wishlist commands', async () => {
+    const showModal = jest.fn();
+    const interaction = {
+      commandName: 'some-other-command',
+      showModal,
+    } as unknown as Parameters<typeof handleWishlistCommand>[0];
+
+    await handleWishlistCommand(interaction);
+
+    expect(showModal).not.toHaveBeenCalled();
+  });
+
   it('rejects if command is used outside a server', async () => {
     const reply = jest.fn();
     const interaction = {

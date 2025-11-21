@@ -40,6 +40,7 @@ export function buildWishlistModal(): ModalBuilder {
 export async function handleWishlistCommand(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
+  if (interaction.commandName !== RATMAS_WISHLIST_COMMAND) return;
   await interaction.showModal(buildWishlistModal());
 }
 
