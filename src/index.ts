@@ -11,6 +11,7 @@ import {
   handleRatmasStartModal,
   handleRatmasOptOutButton,
 } from './commands/ratmas-start.command.js';
+import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
 
 dotenv.config();
 
@@ -110,6 +111,7 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
     try {
       if (interaction.isChatInputCommand()) {
         await handleRatmasStartCommand(interaction, ratmasDependencies);
+        await handleRatmasEndCommand(interaction, ratmasDependencies);
       } else if (interaction.isModalSubmit()) {
         await handleRatmasStartModal(interaction, ratmasDependencies);
       } else if (interaction.isButton()) {
@@ -164,36 +166,6 @@ async function handleCommands(message: Message, services: AppServices): Promise<
   if (message.content === '!roles' && message.guildId) {
     await handleRolesCommand(message, services.roleService);
     return;
-  }
-
-  if (message.content === '!endratmas' && message.guildId) {
-    await handleEndRatmasCommand(message, services.ratService);
-    return;
-  }
-}
-
-/**
- * Handle the endratmas command
- */
-async function handleEndRatmasCommand(message: Message, ratService: RatService): Promise<void> {
-  try {
-    if (!message.guildId) {
-      message.reply('This command must be used in a server.');
-      return;
-    }
-
-    const event = await ratService.getActiveEvent(message.guildId);
-    if (!event) {
-      message.reply('No active Ratmas event found.');
-      return;
-    }
-
-    await ratService.completeEvent(event.id);
-    message.reply('✅ Ratmas event has been completed! Thank you to all participants! 🎄🐀');
-  } catch (error) {
-    console.error('Error completing Ratmas event:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    message.reply(`❌ Failed to complete Ratmas event: ${errorMessage}`);
   }
 }
 
