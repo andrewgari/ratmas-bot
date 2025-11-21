@@ -100,7 +100,10 @@ describe('ratmas-wishlist command', () => {
 
     ratServiceMocks.getActiveEvent.mockResolvedValue(mockEvent as never);
     ratServiceMocks.getOrCreateParticipant.mockResolvedValue(mockParticipant as never);
-    ratServiceMocks.updateParticipant.mockResolvedValue({ ...mockParticipant, wishlistUrl: 'https://amazon.com/wishlist' } as never);
+    ratServiceMocks.updateParticipant.mockResolvedValue({
+      ...mockParticipant,
+      wishlistUrl: 'https://amazon.com/wishlist',
+    } as never);
 
     const interaction = {
       customId: RATMAS_WISHLIST_MODAL_ID,
@@ -116,7 +119,11 @@ describe('ratmas-wishlist command', () => {
     await handleWishlistModal(interaction, ratServiceMocks as unknown as RatService);
 
     expect(ratServiceMocks.getActiveEvent).toHaveBeenCalledWith('guild-123');
-    expect(ratServiceMocks.getOrCreateParticipant).toHaveBeenCalledWith('event-123', 'user-123', 'testuser');
+    expect(ratServiceMocks.getOrCreateParticipant).toHaveBeenCalledWith(
+      'event-123',
+      'user-123',
+      'testuser'
+    );
     expect(ratServiceMocks.updateParticipant).toHaveBeenCalledWith('participant-123', {
       wishlistUrl: 'https://amazon.com/wishlist',
     });

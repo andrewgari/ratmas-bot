@@ -141,7 +141,11 @@ export class RatService {
 
   // ==================== PARTICIPANT MANAGEMENT ====================
 
-  async getOrCreateParticipant(eventId: string, userId: string, displayName: string): Promise<RatmasParticipant> {
+  async getOrCreateParticipant(
+    eventId: string,
+    userId: string,
+    displayName: string
+  ): Promise<RatmasParticipant> {
     const participant = await this.repository.findParticipantByEventAndUser(eventId, userId);
     if (participant) {
       return participant;

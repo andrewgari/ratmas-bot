@@ -31,9 +31,7 @@ export function buildWishlistModal(): ModalBuilder {
     .setPlaceholder('https://www.amazon.com/hz/wishlist/...')
     .setRequired(true);
 
-  modal.addComponents(
-    new ActionRowBuilder<TextInputBuilder>().addComponents(wishlistInput)
-  );
+  modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(wishlistInput));
   return modal;
 }
 
@@ -50,7 +48,10 @@ export async function handleWishlistModal(
 ): Promise<void> {
   if (interaction.customId !== RATMAS_WISHLIST_MODAL_ID) return;
   if (!interaction.guildId) {
-    await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+    await interaction.reply({
+      content: 'This command can only be used in a server.',
+      ephemeral: true,
+    });
     return;
   }
   const wishlistUrl = interaction.fields.getTextInputValue(RATMAS_WISHLIST_INPUT_ID).trim();
@@ -61,7 +62,11 @@ export async function handleWishlistModal(
   try {
     const event = await ratService.getActiveEvent(interaction.guildId);
     if (!event) throw new Error('No active Ratmas event.');
-    const participant = await ratService.getOrCreateParticipant(event.id, interaction.user.id, interaction.member?.user?.username || interaction.user.username);
+    const participant = await ratService.getOrCreateParticipant(
+      event.id,
+      interaction.user.id,
+      interaction.member?.user?.username || interaction.user.username
+    );
     await ratService.updateParticipant(participant.id, { wishlistUrl });
     await interaction.reply({ content: 'Your wishlist has been saved!', ephemeral: true });
   } catch (err) {

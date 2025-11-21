@@ -104,10 +104,12 @@ function registerReadyHandler(client: Client): void {
     try {
       const guilds = await client.guilds.fetch();
       await Promise.all(
-        [...guilds.values()].map((guild) => Promise.all([
-          ensureRatmasStartCommand(client, guild.id),
-          ensureWishlistCommand(client, guild.id)
-        ]))
+        [...guilds.values()].map((guild) =>
+          Promise.all([
+            ensureRatmasStartCommand(client, guild.id),
+            ensureWishlistCommand(client, guild.id),
+          ])
+        )
       );
     } catch (error) {
       console.error('Failed to register Ratmas commands:', error);
@@ -120,7 +122,7 @@ function registerGuildCreateHandler(client: Client): void {
     try {
       await Promise.all([
         ensureRatmasStartCommand(client, guild.id),
-        ensureWishlistCommand(client, guild.id)
+        ensureWishlistCommand(client, guild.id),
       ]);
     } catch (error) {
       console.error(`Failed to register Ratmas commands for guild ${guild.id}:`, error);
