@@ -1,0 +1,64 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy via Docker Compose
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.DISCORD_TOKEN }}" ]; then
+            echo "Error: DISCORD_TOKEN secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DISCORD_CLIENT_ID }}" ]; then
+            echo "Error: DISCORD_CLIENT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.RATMAS_ROLE_ID }}" ]; then
+            echo "Error: RATMAS_ROLE_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+            echo "Error: DATABASE_URL secret is not set"
+            exit 1
+          fi
+
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << EOF
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+          RATMAS_ROLE_ID=${{ secrets.RATMAS_ROLE_ID }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          EOF
+          chmod 600 .env
+
+      - name: Pull Docker images
+        run: docker compose pull
+
+      - name: Stop existing containers
+        run: docker compose down
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Clean up old images
+        run: docker image prune -f
+
+      - name: Check service health
+        run: |
+          echo "Waiting for service to be ready..."
+          sleep 10
+          docker compose ps
+          docker compose logs --tail=50
