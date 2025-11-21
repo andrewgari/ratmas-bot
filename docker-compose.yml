@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ratmas-bot:
     image: ghcr.io/andrewgari/ratmas-bot:latest
