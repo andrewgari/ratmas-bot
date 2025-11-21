@@ -81,7 +81,10 @@ export async function handleRatmasStartCommand(
 
   const guard = await validateInteraction(interaction, deps.ratService);
   if (!guard.ok) {
-    await interaction.reply({ content: 'message' in guard ? guard.message : 'Error', ephemeral: true });
+    await interaction.reply({
+      content: 'message' in guard ? guard.message : 'Error',
+      ephemeral: true,
+    });
     return;
   }
 
@@ -96,7 +99,10 @@ export async function handleRatmasStartModal(
 
   const guard = await validateInteraction(interaction, deps.ratService);
   if (!guard.ok) {
-    await interaction.reply({ content: 'message' in guard ? guard.message : 'Error', ephemeral: true });
+    await interaction.reply({
+      content: 'message' in guard ? guard.message : 'Error',
+      ephemeral: true,
+    });
     return;
   }
 
