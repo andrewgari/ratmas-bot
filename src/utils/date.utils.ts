@@ -31,17 +31,24 @@ export function toDiscordTimestamp(
 
 export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule {
   const timezone = input.timezone || 'UTC';
-  
+
   // Validate timezone
   const testDateTime = DateTime.now().setZone(timezone);
   if (!testDateTime.isValid || testDateTime.invalidReason) {
-    throw new Error(`Invalid timezone: ${timezone}. Please use a valid IANA timezone (e.g., America/New_York, Europe/London, UTC).`);
+    throw new Error(
+      `Invalid timezone: ${timezone}. Please use a valid IANA timezone (e.g., America/New_York, Europe/London, UTC).`
+    );
   }
 
   const eventStart = parseDateField(input.startDate, 'Start date', 'start', timezone);
   const eventEnd = parseDateField(input.endDate, 'End date', 'end', timezone);
   const reveal = parseDateField(input.revealDate, 'Opening day', 'start', timezone);
-  const purchaseDeadline = parseDateField(input.purchaseDeadline, 'Purchase deadline', 'end', timezone);
+  const purchaseDeadline = parseDateField(
+    input.purchaseDeadline,
+    'Purchase deadline',
+    'end',
+    timezone
+  );
 
   return {
     eventStartDate: eventStart.toJSDate(),
@@ -57,7 +64,12 @@ export function calculateAssignmentAnnouncementDate(eventStartDate: Date): strin
   return toDiscordTimestamp(assignmentDate.toJSDate(), 'D');
 }
 
-function parseDateField(value: string, label: string, boundary: 'start' | 'end', timezone: string): DateTime {
+function parseDateField(
+  value: string,
+  label: string,
+  boundary: 'start' | 'end',
+  timezone: string
+): DateTime {
   const trimmed = value.trim();
   if (!trimmed) {
     throw new Error(`${label} is required.`);

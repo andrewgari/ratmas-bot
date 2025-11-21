@@ -196,7 +196,7 @@ describe('date.utils', () => {
     // Verify millisecond precision is maintained
     expect(schedule.eventEndDate.getMilliseconds()).toBe(999);
     expect(schedule.purchaseDeadline.getMilliseconds()).toBe(999);
-    
+
     // Verify exact time
     expect(schedule.eventEndDate.toISOString()).toBe('2025-12-01T23:59:59.999Z');
     expect(schedule.purchaseDeadline.toISOString()).toBe('2025-11-30T23:59:59.999Z');
