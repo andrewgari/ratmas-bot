@@ -30,10 +30,11 @@ export function toDiscordTimestamp(
 }
 
 export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule {
-  const timezone = input.timezone || 'utc';
+  const timezone = input.timezone || 'UTC';
   
   // Validate timezone
-  if (!DateTime.local().setZone(timezone).isValid) {
+  const testDateTime = DateTime.now().setZone(timezone);
+  if (!testDateTime.isValid || testDateTime.invalidReason) {
     throw new Error(`Invalid timezone: ${timezone}. Please use a valid IANA timezone (e.g., America/New_York, Europe/London, UTC).`);
   }
 
