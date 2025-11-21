@@ -10,6 +10,7 @@ import type {
 
 const ACTIVE_STATUSES: RatmasEventStatus[] = [
   RatmasEventStatus.OPEN,
+  RatmasEventStatus.WISHLIST,
   RatmasEventStatus.LOCKED,
   RatmasEventStatus.MATCHED,
   RatmasEventStatus.NOTIFIED,

@@ -141,6 +141,14 @@ export class RatService {
 
   // ==================== PARTICIPANT MANAGEMENT ====================
 
+  async getOrCreateParticipant(eventId: string, userId: string, displayName: string): Promise<RatmasParticipant> {
+    const participant = await this.repository.findParticipantByEventAndUser(eventId, userId);
+    if (participant) {
+      return participant;
+    }
+    return this.addParticipant(eventId, userId, displayName);
+  }
+
   async addParticipant(
     eventId: string,
     userId: string,
@@ -150,7 +158,7 @@ export class RatService {
     const event = await this.repository.findEventById(eventId);
     if (!event) throw new Error(`Event ${eventId} not found`);
 
-    if (event.status !== RatmasEventStatus.OPEN) {
+    if (event.status !== RatmasEventStatus.OPEN && event.status !== RatmasEventStatus.WISHLIST) {
       throw new Error(`Cannot add participants to event with status: ${event.status}`);
     }
 
