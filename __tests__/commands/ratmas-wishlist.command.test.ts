@@ -6,13 +6,13 @@ import {
   RATMAS_WISHLIST_MODAL_ID,
 } from '../../src/commands/ratmas-wishlist.command.js';
 import { RatService } from '../../src/services/rat.service.js';
-import { RatmasEventStatus } from '../../src/types/ratmas.types.js';
+import { RatmasEventStatus, RatmasEvent, RatmasParticipant } from '../../src/types/ratmas.types.js';
 
 describe('ratmas-wishlist command', () => {
   const ratServiceMocks = {
-    getActiveEvent: jest.fn<() => Promise<any>>(),
-    getOrCreateParticipant: jest.fn<() => Promise<any>>(),
-    updateParticipant: jest.fn<() => Promise<any>>(),
+    getActiveEvent: jest.fn<() => Promise<RatmasEvent | null>>(),
+    getOrCreateParticipant: jest.fn<() => Promise<RatmasParticipant>>(),
+    updateParticipant: jest.fn<() => Promise<RatmasParticipant>>(),
   };
 
   beforeEach(() => {

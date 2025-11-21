@@ -2,9 +2,7 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ChannelType } from 'discord.js';
 import {
   handleRatmasStartCommand,
-  handleRatmasStartModal,
   RATMAS_COMMAND_NAME,
-  RATMAS_START_MODAL_ID,
 } from '../../src/commands/ratmas-start.command.js';
 import { RatService } from '../../src/services/rat.service.js';
 import { ChannelService } from '../../src/services/channel.service.js';
@@ -38,25 +36,7 @@ describe('ratmas-start command integration', () => {
     }));
   });
 
-  it('shows the schedule modal when the admin invokes /ratmas start', async () => {
-    const showModal = jest.fn();
-    const interaction = {
-      commandName: RATMAS_COMMAND_NAME,
-      options: { getSubcommand: () => 'start' },
-      memberPermissions: { has: () => true },
-      guildId: 'guild-123',
-      showModal,
-      client: {},
-    } as unknown as Parameters<typeof handleRatmasStartCommand>[0];
-
-    await handleRatmasStartCommand(interaction, deps);
-
-    expect(showModal).toHaveBeenCalledTimes(1);
-    const modal = showModal.mock.calls[0]?.[0] as { data?: { custom_id?: string } } | undefined;
-    expect(modal?.data?.custom_id).toBe(RATMAS_START_MODAL_ID);
-  });
-
-  it('runs the full modal flow and persists the event', async () => {
+  it('creates a Ratmas event when the admin invokes /ratmas start with date options', async () => {
     const send = jest.fn();
     channelServiceMocks.setChannelPermissions.mockImplementation(async () => ({ success: true }));
 
@@ -87,25 +67,28 @@ describe('ratmas-start command integration', () => {
       },
     };
 
-    const fieldValues: Record<string, string> = {
-      'ratmas-start-date': '2025-12-01',
-      'ratmas-end-date': '2025-12-26',
-      'ratmas-reveal-date': '2025-12-26',
-      'ratmas-purchase-deadline': '2025-12-16',
-    };
-
     const interaction = {
-      customId: RATMAS_START_MODAL_ID,
+      commandName: RATMAS_COMMAND_NAME,
+      options: {
+        getSubcommand: () => 'start',
+        getString: (name: string) => {
+          const values: Record<string, string> = {
+            timezone: 'UTC',
+            start_date: '2025-12-01',
+            end_date: '2025-12-26',
+            reveal_date: '2025-12-26',
+            purchase_deadline: '2025-12-16',
+          };
+          return values[name];
+        },
+      },
       guildId: 'guild-123',
       memberPermissions: { has: () => true },
       client,
-      fields: {
-        getTextInputValue: (id: string) => fieldValues[id],
-      },
       reply: jest.fn(),
-    } as unknown as Parameters<typeof handleRatmasStartModal>[0];
+    } as unknown as Parameters<typeof handleRatmasStartCommand>[0];
 
-    await handleRatmasStartModal(interaction, deps);
+    await handleRatmasStartCommand(interaction, deps);
 
     expect(channelServiceMocks.createTextChannel).toHaveBeenCalledWith('guild-123', {
       name: 'ratmas-2025',

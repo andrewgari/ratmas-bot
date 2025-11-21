@@ -2,7 +2,6 @@ import {
   ButtonInteraction,
   ChatInputCommandInteraction,
   Client,
-  ModalSubmitInteraction,
   PermissionFlagsBits,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
@@ -11,15 +10,10 @@ import {
 import { RatService } from '../services/rat.service.js';
 import { ChannelService } from '../services/channel.service.js';
 import { RoleService } from '../services/role.service.js';
-import {
-  buildScheduleModal,
-  parseScheduleFromModal,
-  prepareRatmasChannel,
-  publishWelcomeMessage,
-} from './ratmas-start.helpers.js';
+import { prepareRatmasChannel, publishWelcomeMessage } from './ratmas-start.helpers.js';
+import { parseRatmasSchedule } from '../utils/date.utils.js';
 
 export const RATMAS_COMMAND_NAME = 'ratmas';
-export const RATMAS_START_MODAL_ID = 'ratmas-start-schedule-modal';
 export const RATMAS_OPT_OUT_BUTTON_ID = 'ratmas-opt-out-button';
 
 const START_SUBCOMMAND = 'start';
@@ -88,60 +82,64 @@ export async function handleRatmasStartCommand(
     return;
   }
 
-  await interaction.showModal(buildScheduleModal(RATMAS_START_MODAL_ID));
-}
-
-export async function handleRatmasStartModal(
-  interaction: ModalSubmitInteraction,
-  deps: RatmasStartDependencies
-): Promise<void> {
-  if (interaction.customId !== RATMAS_START_MODAL_ID) return;
-
-  const guard = await validateInteraction(interaction, deps.ratService);
-  if (!guard.ok) {
-    await interaction.reply({
-      content: 'message' in guard ? guard.message : 'Error',
-      ephemeral: true,
-    });
-    return;
-  }
-
   try {
-    const schedule = parseScheduleFromModal(interaction);
-    const channelInfo = await prepareRatmasChannel({
-      client: interaction.client,
-      guildId: interaction.guildId!,
-      ratmasRoleId: guard.ratmasRoleId,
-      schedule,
-      channelService: deps.channelService,
-    });
-
-    await deps.ratService.createEvent({
-      guildId: interaction.guildId!,
-      ratmasRoleId: guard.ratmasRoleId,
-      eventStartDate: schedule.eventStartDate,
-      purchaseDeadline: schedule.purchaseDeadline,
-      revealDate: schedule.revealDate,
-      eventEndDate: schedule.eventEndDate,
-      announcementChannelId: channelInfo.channelId,
-    });
-
-    await publishWelcomeMessage({
-      client: interaction.client,
-      channelId: channelInfo.channelId,
-      schedule,
-      yearLabel: channelInfo.yearLabel,
-      optOutButtonId: RATMAS_OPT_OUT_BUTTON_ID,
-    });
-
-    await interaction.reply({
-      content: `Ratmas ${channelInfo.yearLabel} is live in <#${channelInfo.channelId}>!`,
-      ephemeral: true,
-    });
+    await executeRatmasStart(interaction, deps, guard.ratmasRoleId);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to start Ratmas.';
     await interaction.reply({ content: message, ephemeral: true });
   }
+}
+
+async function executeRatmasStart(
+  interaction: ChatInputCommandInteraction,
+  deps: RatmasStartDependencies,
+  ratmasRoleId: string
+): Promise<void> {
+  // Parse dates from command options
+  const timezone = interaction.options.getString('timezone', true);
+  const startDate = interaction.options.getString('start_date', true);
+  const endDate = interaction.options.getString('end_date', true);
+  const revealDate = interaction.options.getString('reveal_date', true);
+  const purchaseDeadline = interaction.options.getString('purchase_deadline', true);
+
+  const schedule = parseRatmasSchedule({
+    startDate,
+    endDate,
+    revealDate,
+    purchaseDeadline,
+    timezone,
+  });
+
+  const channelInfo = await prepareRatmasChannel({
+    client: interaction.client,
+    guildId: interaction.guildId!,
+    ratmasRoleId,
+    schedule,
+    channelService: deps.channelService,
+  });
+
+  await deps.ratService.createEvent({
+    guildId: interaction.guildId!,
+    ratmasRoleId,
+    eventStartDate: schedule.eventStartDate,
+    purchaseDeadline: schedule.purchaseDeadline,
+    revealDate: schedule.revealDate,
+    eventEndDate: schedule.eventEndDate,
+    announcementChannelId: channelInfo.channelId,
+  });
+
+  await publishWelcomeMessage({
+    client: interaction.client,
+    channelId: channelInfo.channelId,
+    schedule,
+    yearLabel: channelInfo.yearLabel,
+    optOutButtonId: RATMAS_OPT_OUT_BUTTON_ID,
+  });
+
+  await interaction.reply({
+    content: `Ratmas ${channelInfo.yearLabel} is live in <#${channelInfo.channelId}>!`,
+    ephemeral: true,
+  });
 }
 
 export async function handleRatmasOptOutButton(
@@ -181,7 +179,7 @@ export async function handleRatmasOptOutButton(
 }
 
 async function validateInteraction(
-  interaction: ChatInputCommandInteraction | ModalSubmitInteraction,
+  interaction: ChatInputCommandInteraction,
   ratService: RatService
 ): Promise<{ ok: true; ratmasRoleId: string } | { ok: false; message: string }> {
   if (!interaction.guildId) {
@@ -214,7 +212,39 @@ async function validateInteraction(
 function buildStartSubcommand(
   subcommand: SlashCommandSubcommandBuilder
 ): SlashCommandSubcommandBuilder {
-  return subcommand.setName(START_SUBCOMMAND).setDescription("Start this year's Ratmas");
+  return subcommand
+    .setName(START_SUBCOMMAND)
+    .setDescription("Start this year's Ratmas")
+    .addStringOption((option) =>
+      option
+        .setName('timezone')
+        .setDescription('Your timezone (e.g., America/New_York, Europe/London, UTC)')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('start_date')
+        .setDescription('Start date (YYYY-MM-DD in your timezone)')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('end_date')
+        .setDescription('End date (YYYY-MM-DD in your timezone)')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('reveal_date')
+        .setDescription('Opening day (YYYY-MM-DD in your timezone)')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('purchase_deadline')
+        .setDescription('Purchase deadline (YYYY-MM-DD in your timezone)')
+        .setRequired(true)
+    );
 }
 
 function buildEndSubcommand(

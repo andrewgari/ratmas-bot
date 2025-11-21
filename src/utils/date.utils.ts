@@ -5,6 +5,7 @@ export interface RatmasScheduleInput {
   endDate: string;
   revealDate: string;
   purchaseDeadline: string;
+  timezone?: string;
 }
 
 export interface RatmasSchedule {
@@ -29,10 +30,25 @@ export function toDiscordTimestamp(
 }
 
 export function parseRatmasSchedule(input: RatmasScheduleInput): RatmasSchedule {
-  const eventStart = parseDateFieldUTC(input.startDate, 'Start date', 'start');
-  const eventEnd = parseDateFieldUTC(input.endDate, 'End date', 'end');
-  const reveal = parseDateFieldUTC(input.revealDate, 'Opening day', 'start');
-  const purchaseDeadline = parseDateFieldUTC(input.purchaseDeadline, 'Purchase deadline', 'end');
+  const timezone = input.timezone || 'UTC';
+
+  // Validate timezone
+  const testDateTime = DateTime.now().setZone(timezone);
+  if (!testDateTime.isValid || testDateTime.invalidReason) {
+    throw new Error(
+      `Invalid timezone: ${timezone}. Please use a valid IANA timezone (e.g., America/New_York, Europe/London, UTC).`
+    );
+  }
+
+  const eventStart = parseDateField(input.startDate, 'Start date', 'start', timezone);
+  const eventEnd = parseDateField(input.endDate, 'End date', 'end', timezone);
+  const reveal = parseDateField(input.revealDate, 'Opening day', 'start', timezone);
+  const purchaseDeadline = parseDateField(
+    input.purchaseDeadline,
+    'Purchase deadline',
+    'end',
+    timezone
+  );
 
   return {
     eventStartDate: eventStart.toJSDate(),
@@ -48,16 +64,24 @@ export function calculateAssignmentAnnouncementDate(eventStartDate: Date): strin
   return toDiscordTimestamp(assignmentDate.toJSDate(), 'D');
 }
 
-function parseDateFieldUTC(value: string, label: string, boundary: 'start' | 'end'): DateTime {
+function parseDateField(
+  value: string,
+  label: string,
+  boundary: 'start' | 'end',
+  timezone: string
+): DateTime {
   const trimmed = value.trim();
   if (!trimmed) {
     throw new Error(`${label} is required.`);
   }
 
-  const parsed = DateTime.fromISO(trimmed, { zone: 'utc' });
+  // Parse in the user's timezone, then convert to UTC
+  const parsed = DateTime.fromISO(trimmed, { zone: timezone });
   if (!parsed.isValid) {
     throw new Error(`${label} must be in YYYY-MM-DD format.`);
   }
 
-  return boundary === 'end' ? parsed.endOf('day') : parsed.startOf('day');
+  // Apply boundary (start or end of day) in user's timezone, then convert to UTC
+  const withBoundary = boundary === 'end' ? parsed.endOf('day') : parsed.startOf('day');
+  return withBoundary.toUTC();
 }
