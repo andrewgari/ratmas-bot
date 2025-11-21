@@ -36,12 +36,6 @@ jobs:
         id: sha
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Extract metadata
-        id: meta
-        run: |
-          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "short_sha=${{ steps.sha.outputs.short }}" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         id: build
@@ -49,8 +43,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/<org>/<app>:pr-${{ steps.meta.outputs.pr_number }}-${{ steps.meta.outputs.short_sha }}
-            ghcr.io/<org>/<app>:pr-${{ steps.meta.outputs.pr_number }}-latest
+            ghcr.io/<org>/<app>:pr-${{ github.event.pull_request.number }}-${{ steps.sha.outputs.short }}
+            ghcr.io/<org>/<app>:pr-${{ github.event.pull_request.number }}-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
@@ -67,11 +61,11 @@ jobs:
         run: |
           echo "## Docker Image Built and Pushed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**PR Number:** ${{ steps.meta.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Short SHA:** ${{ steps.meta.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PR Number:** ${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Short SHA:** ${{ steps.sha.outputs.short }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tags pushed:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/<org>/<app>:pr-${{ steps.meta.outputs.pr_number }}-${{ steps.meta.outputs.short_sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/<org>/<app>:pr-${{ steps.meta.outputs.pr_number }}-latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/<org>/<app>:pr-${{ github.event.pull_request.number }}-${{ steps.sha.outputs.short }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/<org>/<app>:pr-${{ github.event.pull_request.number }}-latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY

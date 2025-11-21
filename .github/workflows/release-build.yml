@@ -36,13 +36,6 @@ jobs:
         id: sha
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          # Extract version from tag (e.g., v1.2.3 -> v1.2.3)
-          TAG_NAME="${{ github.event.release.tag_name }}"
-          echo "semver=${TAG_NAME}" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         id: build
@@ -51,7 +44,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/<org>/<app>:stable
-            ghcr.io/<org>/<app>:${{ steps.version.outputs.semver }}
+            ghcr.io/<org>/<app>:${{ github.event.release.tag_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
@@ -75,6 +68,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tags pushed:**" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/<org>/<app>:stable\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/<org>/<app>:${{ steps.version.outputs.semver }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/<org>/<app>:${{ github.event.release.tag_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
