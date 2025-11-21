@@ -1,4 +1,5 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck - Jest mock types are incompatible with service/repository signatures
 import { jest } from '@jest/globals';
 import type { Client } from 'discord.js';
 import { RatService } from '../src/services/rat.service.js';

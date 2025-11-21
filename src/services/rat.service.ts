@@ -31,6 +31,7 @@ export class RatService {
   private readonly channelService: ChannelService;
   private readonly repository: RatmasRepository;
 
+  // eslint-disable-next-line max-params
   constructor(
     _client: Client,
     userService: UserService,

@@ -1,4 +1,5 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck - Jest mock types are incompatible with Discord.js
 import { jest } from '@jest/globals';
 import { ChannelService } from '../src/services/channel.service.js';
 import type { Client } from 'discord.js';
@@ -6,7 +7,7 @@ import type { Client } from 'discord.js';
 describe('ChannelService - moveChannelToCategory', () => {
   let channelService: ChannelService;
   let mockClient: Client;
-  let mockChannel: any;
+  let mockChannel: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   beforeEach(() => {
     mockChannel = {
