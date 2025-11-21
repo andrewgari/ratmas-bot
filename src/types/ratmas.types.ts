@@ -20,6 +20,7 @@ export interface RatmasEventConfig {
   revealDate: Date; // When secret santas are revealed
   timezone: string; // IANA timezone (e.g., "America/New_York")
   announcementChannelId?: string; // Optional channel for event announcements
+  archivedCategoryId?: string; // Optional category ID to move channels when event completes
 }
 
 /**
@@ -75,6 +76,7 @@ export interface CreateEventOptions {
   revealDate: Date;
   timezone: string;
   announcementChannelId?: string;
+  archivedCategoryId?: string; // Category to move channels to when event completes
 }
 
 /**

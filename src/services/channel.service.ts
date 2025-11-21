@@ -140,6 +140,35 @@ export class ChannelService {
   }
 
   /**
+   * Move a channel to a different category
+   * @param channelId - The channel ID to move
+   * @param categoryId - The target category ID (null to remove from category)
+   * @returns Success result
+   */
+  async moveChannelToCategory(
+    channelId: string,
+    categoryId: string | null
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel) {
+        throw new Error(`Channel with ID ${channelId} not found`);
+      }
+
+      if (!('setParent' in channel)) {
+        throw new Error('Channel does not support parent category');
+      }
+
+      await channel.setParent(categoryId);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Failed to move channel to category:`, error);
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
    * Fetch channel and validate it supports permissions
    */
   private async fetchChannelWithPermissions(channelId: string): Promise<{

@@ -17,6 +17,7 @@ model RatmasEvent {
   revealDate            DateTime
   timezone              String
   announcementChannelId String?
+  archivedCategoryId    String?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 

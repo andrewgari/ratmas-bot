@@ -35,6 +35,7 @@ export class RatmasRepository {
         revealDate: options.revealDate,
         timezone: options.timezone,
         announcementChannelId: options.announcementChannelId ?? null,
+        archivedCategoryId: options.archivedCategoryId ?? null,
       },
     });
 
@@ -214,6 +215,7 @@ function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
       revealDate: record.revealDate,
       timezone: record.timezone,
       announcementChannelId: record.announcementChannelId ?? undefined,
+      archivedCategoryId: record.archivedCategoryId ?? undefined,
     },
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,

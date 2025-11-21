@@ -4,6 +4,7 @@ import { UserService } from './services/user.service.js';
 import { MessageService } from './services/message.service.js';
 import { ChannelService } from './services/channel.service.js';
 import { RoleService } from './services/role.service.js';
+import { RatService } from './services/rat.service.js';
 
 // Load environment variables
 dotenv.config();
@@ -30,6 +31,7 @@ export function main(): void {
   const messageService = new MessageService(client);
   const channelService = new ChannelService(client);
   const roleService = new RoleService(client);
+  const ratService = new RatService(client, userService, messageService, channelService);
 
   // Event handler for when the bot is ready
   client.once('ready', () => {
@@ -48,6 +50,7 @@ export function main(): void {
       messageService,
       channelService,
       roleService,
+      ratService,
     });
   });
 
@@ -74,6 +77,7 @@ async function handleCommands(
     messageService: MessageService;
     channelService: ChannelService;
     roleService: RoleService;
+    ratService: RatService;
   }
 ): Promise<void> {
   if (message.content === '!ping') {
@@ -99,6 +103,36 @@ async function handleCommands(
   if (message.content === '!roles' && message.guildId) {
     await handleRolesCommand(message, services.roleService);
     return;
+  }
+
+  if (message.content === '!endratmas' && message.guildId) {
+    await handleEndRatmasCommand(message, services.ratService);
+    return;
+  }
+}
+
+/**
+ * Handle the endratmas command
+ */
+async function handleEndRatmasCommand(message: Message, ratService: RatService): Promise<void> {
+  try {
+    if (!message.guildId) {
+      message.reply('This command must be used in a server.');
+      return;
+    }
+
+    const event = await ratService.getActiveEvent(message.guildId);
+    if (!event) {
+      message.reply('No active Ratmas event found.');
+      return;
+    }
+
+    await ratService.completeEvent(event.id);
+    message.reply('✅ Ratmas event has been completed! Thank you to all participants! 🎄🐀');
+  } catch (error) {
+    console.error('Error completing Ratmas event:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    message.reply(`❌ Failed to complete Ratmas event: ${errorMessage}`);
   }
 }
 
