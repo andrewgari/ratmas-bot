@@ -18,7 +18,8 @@
     "docker:run": "docker compose -f docker-compose.dev.yml up --build",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:migrate:dev": "prisma migrate dev"
+    "prisma:migrate:dev": "prisma migrate dev",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

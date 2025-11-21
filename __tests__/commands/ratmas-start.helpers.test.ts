@@ -21,11 +21,10 @@ describe('ratmas-start helpers', () => {
 
   beforeEach(() => {
     schedule = {
-      eventStartDate: new Date('2025-12-01T05:00:00.000Z'),
-      eventEndDate: new Date('2025-12-26T04:59:59.999Z'),
-      revealDate: new Date('2025-12-26T05:00:00.000Z'),
-      purchaseDeadline: new Date('2025-12-16T04:59:59.999Z'),
-      timezone: 'America/New_York',
+      eventStartDate: new Date('2025-12-01T00:00:00.000Z'),
+      eventEndDate: new Date('2025-12-26T23:59:59.999Z'),
+      revealDate: new Date('2025-12-26T00:00:00.000Z'),
+      purchaseDeadline: new Date('2025-12-16T23:59:59.999Z'),
     };
 
     channelServiceMocks = {

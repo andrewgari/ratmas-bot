@@ -5,6 +5,7 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json* .npmrc* ./
+COPY prisma ./prisma
 RUN npm ci || npm install
 
 FROM base AS build

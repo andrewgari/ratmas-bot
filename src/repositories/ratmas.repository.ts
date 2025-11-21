@@ -35,7 +35,6 @@ export class RatmasRepository {
         revealDate: options.revealDate,
         // Cast until prisma client is regenerated with eventEndDate support
         eventEndDate: options.eventEndDate,
-        timezone: options.timezone,
         announcementChannelId: options.announcementChannelId ?? null,
         archivedCategoryId: options.archivedCategoryId ?? null,
       } as never,
@@ -220,7 +219,6 @@ function mapEvent(record: PrismaRatmasEvent): RatmasEvent {
       purchaseDeadline: record.purchaseDeadline,
       revealDate: record.revealDate,
       eventEndDate: recordWithEndDate.eventEndDate ?? undefined,
-      timezone: record.timezone,
       announcementChannelId: record.announcementChannelId ?? undefined,
       archivedCategoryId: recordWithEndDate.archivedCategoryId ?? undefined,
     },
