@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  Client,
   ModalBuilder,
   ModalSubmitInteraction,
   SlashCommandBuilder,
@@ -17,6 +18,18 @@ export function buildWishlistCommand(): SlashCommandBuilder {
   return new SlashCommandBuilder()
     .setName(RATMAS_WISHLIST_COMMAND)
     .setDescription('Submit or update your Ratmas wishlist link');
+}
+
+export async function ensureWishlistCommand(client: Client, guildId: string): Promise<void> {
+  if (!client.application) return;
+
+  const commands = await client.application.commands.fetch({ guildId });
+  const existing = commands.find((command) => command.name === RATMAS_WISHLIST_COMMAND);
+
+  if (!existing) {
+    const command = buildWishlistCommand();
+    await client.application.commands.create(command.toJSON(), guildId);
+  }
 }
 
 export function buildWishlistModal(): ModalBuilder {
@@ -39,6 +52,7 @@ export async function handleWishlistCommand(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
   if (interaction.commandName !== RATMAS_WISHLIST_COMMAND) return;
+
   await interaction.showModal(buildWishlistModal());
 }
 

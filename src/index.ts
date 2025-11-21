@@ -13,11 +13,14 @@ import {
 } from './commands/ratmas-start.command.js';
 import { handleRatmasEndCommand } from './commands/ratmas-end.command.js';
 import {
-  buildWishlistCommand,
+  ensureWishlistCommand,
   handleWishlistCommand,
   handleWishlistModal,
-  RATMAS_WISHLIST_COMMAND,
 } from './commands/ratmas-wishlist.command.js';
+import {
+  ensurePairingsCommand,
+  handlePairingsCommand,
+} from './commands/ratmas-pairings.command.js';
 
 dotenv.config();
 
@@ -82,18 +85,6 @@ function initializeServices(client: Client): AppServices {
   };
 }
 
-async function ensureWishlistCommand(client: Client, guildId: string): Promise<void> {
-  if (!client.application) return;
-
-  const commands = await client.application.commands.fetch({ guildId });
-  const existing = commands.find((command) => command.name === RATMAS_WISHLIST_COMMAND);
-
-  if (!existing) {
-    const command = buildWishlistCommand();
-    await client.application.commands.create(command.toJSON(), guildId);
-  }
-}
-
 function registerReadyHandler(client: Client): void {
   client.once('ready', async () => {
     // eslint-disable-next-line no-console
@@ -108,6 +99,7 @@ function registerReadyHandler(client: Client): void {
           Promise.all([
             ensureRatmasStartCommand(client, guild.id),
             ensureWishlistCommand(client, guild.id),
+            ensurePairingsCommand(client, guild.id),
           ])
         )
       );
@@ -123,6 +115,7 @@ function registerGuildCreateHandler(client: Client): void {
       await Promise.all([
         ensureRatmasStartCommand(client, guild.id),
         ensureWishlistCommand(client, guild.id),
+        ensurePairingsCommand(client, guild.id),
       ]);
     } catch (error) {
       console.error(`Failed to register Ratmas commands for guild ${guild.id}:`, error);
@@ -139,6 +132,7 @@ function registerInteractionHandlers(client: Client, services: AppServices): voi
         await handleRatmasStartCommand(interaction, ratmasDependencies);
         await handleRatmasEndCommand(interaction, ratmasDependencies);
         await handleWishlistCommand(interaction);
+        await handlePairingsCommand(interaction, services.ratService);
       } else if (interaction.isModalSubmit()) {
         await handleRatmasStartModal(interaction, ratmasDependencies);
         await handleWishlistModal(interaction, services.ratService);
