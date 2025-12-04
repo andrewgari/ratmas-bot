@@ -1,13 +1,17 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
     branches: [main]
 
 jobs:
-  # Parallel checks
+  # ============================================================================
+  # PHASE 1: Parallel Checks (PR and Push)
+  # ============================================================================
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -89,37 +93,107 @@ jobs:
           # Run pytest (will pass if no tests found)
           pytest tests/ -v --cov=src --cov-report=term-missing || echo "No tests found, skipping"
 
-  # Sequential: Build Docker after checks pass
-  docker-build:
-    name: Docker Build
+  # ============================================================================
+  # PHASE 2: Docker Build and Push (Only on PR)
+  # ============================================================================
+
+  docker-build-and-push:
+    name: Docker Build and Push
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     needs: [lint, build, test]
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-      image-metadata: ${{ steps.build.outputs.metadata }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        id: build
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.pull_request.updated_at }}
+
+      - name: Build and push Docker image
+        id: build-push
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          push: false
-          tags: ratmas-bot:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: true
+          sbom: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/ratmas-bot.tar
 
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
+      - name: Output image info
+        run: |
+          echo "✅ Docker image built and pushed successfully"
+          echo "Image digest: ${{ steps.build-push.outputs.digest }}"
+          echo "Image tags: ${{ steps.meta.outputs.tags }}"
+
+  # ============================================================================
+  # PHASE 3: Retag Image (Only on Merge to Main)
+  # ============================================================================
+
+  retag-stable:
+    name: Retag Latest as Stable
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: docker-image
-          path: /tmp/ratmas-bot.tar
-          retention-days: 1
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull latest image
+        run: |
+          echo "Pulling latest image..."
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Retag as stable
+        run: |
+          echo "Retagging latest as stable..."
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
+
+      - name: Push stable tag
+        run: |
+          echo "Pushing stable tag..."
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
+          echo "✅ Successfully retagged latest as stable"

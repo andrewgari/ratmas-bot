@@ -28,7 +28,7 @@ jobs:
                     { context: 'Lint' },
                     { context: 'Build' },
                     { context: 'Test' },
-                    { context: 'Docker Build' }
+                    { context: 'Docker Build and Push' }
                   ]
                 },
                 enforce_admins: false,
@@ -44,9 +44,10 @@ jobs:
                 block_creations: false,
                 required_conversation_resolution: true
               });
-              
-              console.log('Branch protection rules updated successfully');
+
+              console.log('✅ Branch protection rules updated successfully');
+              console.log('Required checks: Lint, Build, Test, Docker Build and Push');
             } catch (error) {
-              console.error('Failed to update branch protection:', error);
+              console.error('❌ Failed to update branch protection:', error);
               throw error;
             }
