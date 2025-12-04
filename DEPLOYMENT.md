@@ -21,7 +21,8 @@ Edit `.env` with your actual values:
 - `DISCORD_TOKEN`: Your Discord bot token
 - `DISCORD_CLIENT_ID`: Discord application client ID
 - `DISCORD_GUILD_ID`: Your Discord server ID
-- `RATMAS_ROLE_ID`: Role ID for participants
+- `PARTICIPANT_ROLE_ID`: Role ID for participants
+- `MANAGER_USER_ID`: Discord user ID of the bot administrator
 - `REDIS_HOST`: Redis hostname (default: `redis` for Docker Compose)
 - `REDIS_PORT`: Redis port (default: `6379`)
 

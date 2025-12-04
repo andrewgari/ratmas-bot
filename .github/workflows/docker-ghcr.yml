@@ -144,16 +144,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Re-tag PR image as latest
+        id: retag
         if: steps.pr_image.outputs.found == 'true'
+        continue-on-error: true
         run: |
           SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.pr_image.outputs.tag }}"
           TARGET_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
 
           echo "Pulling PR image: $SOURCE_IMAGE"
-          docker pull $SOURCE_IMAGE || {
+          if ! docker pull $SOURCE_IMAGE; then
             echo "Failed to pull PR image, will build fresh instead"
+            echo "success=false" >> $GITHUB_OUTPUT
             exit 1
-          }
+          fi
 
           echo "Re-tagging as: $TARGET_IMAGE"
           docker tag $SOURCE_IMAGE $TARGET_IMAGE
@@ -161,10 +164,11 @@ jobs:
           echo "Pushing latest tag"
           docker push $TARGET_IMAGE
 
+          echo "success=true" >> $GITHUB_OUTPUT
           echo "✅ Successfully re-tagged PR image as latest"
 
       - name: Build and push fresh image
-        if: steps.pr.outputs.found == 'false' || steps.pr_image.outputs.found == 'false'
+        if: steps.pr.outputs.found == 'false' || steps.pr_image.outputs.found == 'false' || steps.retag.outputs.success == 'false'
         uses: docker/build-push-action@v5
         with:
           context: .

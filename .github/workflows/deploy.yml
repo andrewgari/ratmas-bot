@@ -29,8 +29,12 @@ jobs:
             echo "Error: DISCORD_GUILD_ID secret is not set"
             exit 1
           fi
-          if [ -z "${{ secrets.RATMAS_ROLE_ID }}" ]; then
-            echo "Error: RATMAS_ROLE_ID secret is not set"
+          if [ -z "${{ secrets.PARTICIPANT_ROLE_ID }}" ]; then
+            echo "Error: PARTICIPANT_ROLE_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.MANAGER_USER_ID }}" ]; then
+            echo "Error: MANAGER_USER_ID secret is not set"
             exit 1
           fi
 
@@ -40,7 +44,8 @@ jobs:
           DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
           DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}
-          RATMAS_ROLE_ID=${{ secrets.RATMAS_ROLE_ID }}
+          PARTICIPANT_ROLE_ID=${{ secrets.PARTICIPANT_ROLE_ID }}
+          MANAGER_USER_ID=${{ secrets.MANAGER_USER_ID }}
           REDIS_HOST=redis
           REDIS_PORT=6379
           EOF

@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord import ui
@@ -86,7 +86,7 @@ class PackageCountModal(ui.Modal, title="Enter Package Count"):
 class RecipientSelect(ui.Select):
     """Dropdown for selecting which recipient to update."""
 
-    def __init__(self, sender_id: int, all_users: list, official_receiver_id: int, db: "RatmasDB"):
+    def __init__(self, sender_id: int, all_users: list, official_receiver_id: Optional[int], db: "RatmasDB"):
         self.sender_id = sender_id
         self.db = db
         self.official_receiver_id = official_receiver_id
@@ -95,7 +95,7 @@ class RecipientSelect(ui.Select):
         options = []
         for user in all_users:
             if user["user_id"] != sender_id:
-                is_official = user["user_id"] == official_receiver_id
+                is_official = official_receiver_id is not None and user["user_id"] == official_receiver_id
                 label_prefix = "⭐ " if is_official else ""
                 options.append(
                     discord.SelectOption(
@@ -104,6 +104,16 @@ class RecipientSelect(ui.Select):
                         description="Your official rat" if is_official else None,
                     )
                 )
+
+        # Handle empty options (sender is the only participant)
+        if not options:
+            options.append(
+                discord.SelectOption(
+                    label="No recipients available",
+                    value="none",
+                    description="No other participants in the event"
+                )
+            )
 
         super().__init__(
             placeholder="Select a recipient to update...",
@@ -114,9 +124,18 @@ class RecipientSelect(ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         """Show modal to enter package count."""
-        target_user_id = int(self.values[0])
+        target_user_id_str = self.values[0]
+
+        # Handle "no recipients available" case
+        if target_user_id_str == "none":
+            await interaction.response.send_message(
+                "❌ No recipients available.", ephemeral=True
+            )
+            return
+
+        target_user_id = int(target_user_id_str)
         target_user = self.db.get_user(target_user_id)
-        is_official = target_user_id == self.official_receiver_id
+        is_official = self.official_receiver_id is not None and target_user_id == self.official_receiver_id
 
         modal = PackageCountModal(
             self.sender_id, target_user_id, target_user["display_name"], is_official, self.db
@@ -139,7 +158,7 @@ class PackageUpdateView(ui.View):
     """View with recipient selector and done button."""
 
     def __init__(
-        self, sender_id: int, all_users: list, official_receiver_id: int, bot, db: "RatmasDB"
+        self, sender_id: int, all_users: list, official_receiver_id: Optional[int], bot, db: "RatmasDB"
     ):
         super().__init__(timeout=600)  # 10 minute timeout
         self.sender_id = sender_id

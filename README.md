@@ -36,7 +36,8 @@ Required environment variables in `.env`:
 - `DISCORD_TOKEN`: Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
 - `DISCORD_CLIENT_ID`: Discord application client ID
 - `DISCORD_GUILD_ID`: Your Discord server ID (enable Developer Mode in Discord to copy)
-- `RATMAS_ROLE_ID`: Role ID for participants (users with this role can join the exchange)
+- `PARTICIPANT_ROLE_ID`: Role ID for participants (users with this role can join the exchange)
+- `MANAGER_USER_ID`: Discord user ID of the bot administrator
 - `REDIS_HOST`: Redis server hostname (default: `redis` for Docker Compose)
 - `REDIS_PORT`: Redis server port (default: `6379`)
 
