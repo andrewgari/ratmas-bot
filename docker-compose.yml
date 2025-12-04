@@ -1,4 +1,24 @@
+version: '3.8'
+
+# ==========================================
+# 1. SHARED CONFIGURATION (The "Anchor")
+# ==========================================
+# We define all the secrets here once.
+# Any service can "paste" this block to get access to these variables.
+x-common-env: &common-env
+  DISCORD_TOKEN: ${DISCORD_TOKEN}
+  DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+  DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+  PARTICIPANT_ROLE_ID: ${PARTICIPANT_ROLE_ID}
+  MANAGER_USER_ID: ${MANAGER_USER_ID}
+  MESSAGE_COMBINE_WINDOW_SECONDS: ${MESSAGE_COMBINE_WINDOW_SECONDS:-5} # Default to 5 if missing
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+
 services:
+  # ==========================================
+  # 2. REDIS DATABASE
+  # ==========================================
   redis:
     image: redis:7-alpine
     container_name: ratmas-redis
@@ -14,18 +34,21 @@ services:
       timeout: 3s
       retries: 3
 
+  # ==========================================
+  # 3. THE BOT
+  # ==========================================
   bot:
     build: .
     container_name: ratmas-bot
+    restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-    env_file:
-      - .env
+    
+    # This is where we inject the secrets from GitHub Actions
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    restart: unless-stopped
+      <<: *common-env  # <--- Pastes the secrets from the top block
+      
     logging:
       driver: "json-file"
       options:
