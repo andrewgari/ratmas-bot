@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 async def setup_admin_commands(bot, db: "RatmasDB"):
     """Setup admin commands."""
 
-    @bot.tree.command(name="start-ratmas", description="[ADMIN] Step 1: Initialize a new gift exchange season")
+    @bot.tree.command(
+        name="start-ratmas", description="[ADMIN] Step 1: Initialize a new gift exchange season"
+    )
     @app_commands.default_permissions(administrator=True)
     async def start_ratmas(interaction: discord.Interaction):
         """Start a new Ratmas season."""
@@ -26,7 +28,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
                 "❌ **A season is already running!**\n\n"
                 "You need to end the current season first with `/end-ratmas` before starting a new one.\n"
                 "This prevents accidentally losing current participant data.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -43,14 +45,16 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
         name="end-ratmas", description="[ADMIN] Step 4: End the gift exchange and archive all data"
     )
     @app_commands.default_permissions(administrator=True)
-    @app_commands.describe(permanent="Permanently delete data without archiving (use with caution!)")
+    @app_commands.describe(
+        permanent="Permanently delete data without archiving (use with caution!)"
+    )
     async def end_ratmas(interaction: discord.Interaction, permanent: bool = False):
         """End the current Ratmas season."""
         if not db.is_season_active():
             await interaction.response.send_message(
                 "❌ **No active season found.**\n\n"
                 "There's no season currently running. Use `/start-ratmas` to begin a new one!",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -82,7 +86,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
             await interaction.response.send_message(
                 "❌ **No active season found.**\n\n"
                 "Please run `/start-ratmas` first to initialize a new gift exchange season.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -120,7 +124,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
                 f"❌ **Not enough participants!**\n\n"
                 f"Found {len(participants)} participant(s), but you need at least 2 people for a gift exchange.\n"
                 f"Make sure users have the participant role assigned.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -164,7 +168,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
             await interaction.response.send_message(
                 "❌ **No active season found.**\n\n"
                 "Please run `/start-ratmas` first to initialize a new gift exchange season.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -177,7 +181,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
             await interaction.followup.send(
                 "❌ **No participants found.**\n\n"
                 "You need to run `/custom-assignments` first so participants can choose their gift recipients.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -190,7 +194,7 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
             await interaction.followup.send(
                 "❌ **Server not found!**\n\n"
                 "Could not find the configured Discord server. Please check your DISCORD_GUILD_ID setting.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 

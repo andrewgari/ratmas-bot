@@ -44,7 +44,7 @@ class AssignmentSelect(ui.Select):
             await interaction.response.send_message(
                 "❌ **That person already has an official sender.**\n\n"
                 "Please pick someone else so everyone gets at least one gift giver!",
-                ephemeral=True
+                ephemeral=True,
             )
             logger.warning(
                 f"User {self.user_id} tried to select {selected_id} who already has a sender"

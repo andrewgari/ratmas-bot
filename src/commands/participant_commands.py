@@ -58,7 +58,8 @@ async def setup_participant_commands(bot, db: "RatmasDB"):
         logger.info(f"User {interaction.user.name} checked status: {total_packages} packages")
 
     @bot.tree.command(
-        name="update-packages", description="Tell us how many packages you're sending to each person"
+        name="update-packages",
+        description="Tell us how many packages you're sending to each person",
     )
     @has_participant_role()
     async def update_packages(interaction: discord.Interaction):
@@ -67,7 +68,7 @@ async def setup_participant_commands(bot, db: "RatmasDB"):
             await interaction.response.send_message(
                 "❌ **No active season.**\n\n"
                 "There's no gift exchange currently running. Wait for an admin to start a new season!",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 

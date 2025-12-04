@@ -98,7 +98,7 @@ class DMHandler:
                 f"💡 **Need help?**\n"
                 f"• **Send Reminder** - Resend this message to your gift giver\n"
                 f"• **Report Issue** - Contact the manager about a problem",
-                view=view
+                view=view,
             )
 
             # Confirm to sender

@@ -53,7 +53,7 @@ class ReminderButton(ui.Button):
         await interaction.response.send_message(
             "✅ **Reminder sent!**\n\n"
             "Your message has been resent to your gift recipient, and the manager has been notified in case follow-up is needed.",
-            ephemeral=True
+            ephemeral=True,
         )
         logger.info(f"Reminder sent from {self.sender_id} to {self.receiver_id}")
 
