@@ -25,7 +25,7 @@ services:
     ports:
       - "6380:6379"
     volumes:
-      - redis-data:/data
+      - /mnt/user/appdata/ratmas-bot/redis:/data
     command: redis-server --appendonly yes
     restart: unless-stopped
     healthcheck:
@@ -54,6 +54,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-volumes:
-  redis-data:
