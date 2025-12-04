@@ -2,74 +2,59 @@ name: Deploy to Server
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy via Docker Compose
-    runs-on: self-hosted
+    name: Build & Deploy on Unraid
+    runs-on: [self-hosted, unraid] # Ensure labels match your runner
+    
+    # Set permissions if you need to clean up root-owned files later
+    container:
+      image: docker:cli # Optional: Ensures a clean docker environment if not using the default runner shell
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate required secrets
+      # Optimization: simplified secret validation and generation
+      # This loops through the secrets and dumps them to .env
+      - name: Create .env file
         run: |
-          if [ -z "${{ secrets.DISCORD_TOKEN }}" ]; then
-            echo "Error: DISCORD_TOKEN secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DISCORD_CLIENT_ID }}" ]; then
-            echo "Error: DISCORD_CLIENT_ID secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DISCORD_GUILD_ID }}" ]; then
-            echo "Error: DISCORD_GUILD_ID secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.PARTICIPANT_ROLE_ID }}" ]; then
-            echo "Error: PARTICIPANT_ROLE_ID secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.MANAGER_USER_ID }}" ]; then
-            echo "Error: MANAGER_USER_ID secret is not set"
+          touch .env
+          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
+          echo "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}" >> .env
+          echo "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}" >> .env
+          echo "PARTICIPANT_ROLE_ID=${{ secrets.PARTICIPANT_ROLE_ID }}" >> .env
+          echo "MANAGER_USER_ID=${{ secrets.MANAGER_USER_ID }}" >> .env
+          echo "REDIS_HOST=redis" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          
+          # fail if any value is empty (simple validation)
+          if grep -q "=$" .env; then
+            echo "Error: One or more secrets are empty!"
             exit 1
           fi
 
-      - name: Create .env file from secrets
+      # SPEED IMPROVEMENT: Build locally instead of Pulling
+      # This uses the Unraid Host's docker cache. 
+      # If you changed one line of code, it only rebuilds that one layer.
+      - name: Build and Deploy
         run: |
-          cat > .env << EOF
-          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-          DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-          DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}
-          PARTICIPANT_ROLE_ID=${{ secrets.PARTICIPANT_ROLE_ID }}
-          MANAGER_USER_ID=${{ secrets.MANAGER_USER_ID }}
-          REDIS_HOST=redis
-          REDIS_PORT=6379
-          EOF
-          chmod 600 .env
+          docker compose up -d --build --force-recreate --remove-orphans
 
-      - name: Pull Docker images
-        run: docker compose pull
-
-      - name: Stop existing containers
-        run: docker compose down
-
-      - name: Start services
-        run: docker compose up -d
-
-      - name: Clean up old images
+      - name: Prune old images
         run: docker image prune -f
 
-      - name: Check service health
+      - name: Health Check
         run: |
-          echo "Waiting for services to be ready..."
-          sleep 10
-          echo "Checking Redis health..."
-          docker compose exec redis redis-cli ping
-          echo "Checking container status..."
-          docker compose ps
-          echo "Recent bot logs:"
-          docker compose logs --tail=50 bot
+          echo "Waiting for bot to stabilize..."
+          sleep 5
+          docker compose logs --tail=20
+          
+          # check if the bot container is actually running
+          if [ -z "$(docker compose ps -q bot)" ]; then
+            echo "Bot container is not running!"
+            exit 1
+          fi
