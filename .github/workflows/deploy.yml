@@ -8,18 +8,15 @@ on:
 jobs:
   deploy:
     name: Build & Deploy on Unraid
-    runs-on: [self-hosted, unraid] # Ensure labels match your runner
+    # MAKE SURE your runner actually has the 'unraid' label!
+    # If not, use: runs-on: [self-hosted, ratmas]
+    runs-on: [self-hosted, unraid] 
     
-    # Set permissions if you need to clean up root-owned files later
-    container:
-      image: docker:cli # Optional: Ensures a clean docker environment if not using the default runner shell
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Optimization: simplified secret validation and generation
-      # This loops through the secrets and dumps them to .env
+      # 1. Create .env file for the bot to use
       - name: Create .env file
         run: |
           touch .env
@@ -31,30 +28,38 @@ jobs:
           echo "REDIS_HOST=redis" >> .env
           echo "REDIS_PORT=6379" >> .env
           
-          # fail if any value is empty (simple validation)
+          # Simple check to ensure variables aren't empty
           if grep -q "=$" .env; then
             echo "Error: One or more secrets are empty!"
             exit 1
           fi
 
-      # SPEED IMPROVEMENT: Build locally instead of Pulling
-      # This uses the Unraid Host's docker cache. 
-      # If you changed one line of code, it only rebuilds that one layer.
+      # 2. Build and Deploy
+      # Note: This requires a 'docker-compose.yml' in your repo root
       - name: Build and Deploy
         run: |
+          # Pulls base images, builds your code, recreates containers
           docker compose up -d --build --force-recreate --remove-orphans
 
+      # 3. Cleanup to save space on Unraid
       - name: Prune old images
         run: docker image prune -f
 
+      # 4. Health Check
       - name: Health Check
         run: |
           echo "Waiting for bot to stabilize..."
-          sleep 5
+          sleep 10
+          
+          # Print logs for debugging
           docker compose logs --tail=20
           
-          # check if the bot container is actually running
+          # Check if the container is running. 
+          # Ensure your service name in docker-compose.yml is actually 'bot' or 'ratmas-bot'
+          # If your service is named 'app' or 'worker', change 'bot' below to match.
           if [ -z "$(docker compose ps -q bot)" ]; then
-            echo "Bot container is not running!"
+            echo "❌ Bot container is not running!"
             exit 1
+          else
+            echo "✅ Bot is online!"
           fi
