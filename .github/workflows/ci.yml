@@ -28,9 +28,6 @@ jobs:
               - 'docker-compose.yml'
               - 'requirements.txt'
               - 'pyproject.toml'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/deploy.yml'
-              - '.github/workflows/docker-ghcr.yml'
 
   # Parallel checks
   lint:
