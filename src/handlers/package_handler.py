@@ -105,7 +105,7 @@ class RecipientSelect(ui.Select):
                     discord.SelectOption(
                         label=f"{label_prefix}{user['display_name']}",
                         value=str(user["user_id"]),
-                        description="Your official rat" if is_official else None,
+                        description="Your official gift recipient" if is_official else None,
                     )
                 )
 
@@ -213,23 +213,24 @@ async def send_package_update_dm(bot, db: "RatmasDB", member: discord.Member):
     view = PackageUpdateView(member.id, all_users, official_receiver_id, bot, db)
 
     message = "📦 **Tell Us How Many Packages You're Sending**\n\n"
-    message += "We need to know how many packages each person should expect to receive.\n\n"
+    message += "**Why?** This helps everyone know how many packages to expect, "
+    message += "so they'll know when all their gifts have arrived! 🎁\n\n"
 
     if official_receiver_id:
         official_user = db.get_user(official_receiver_id)
         official_name = official_user["display_name"] if official_user else "Unknown"
-        message += f"**Your official rat:** {official_name} ⭐\n"
-        message += "This is the person you chose to send gifts to.\n\n"
+        message += f"**Your official gift recipient:** {official_name} ⭐\n"
+        message += "This is the person you chose to send gifts to. They're counting on you!\n\n"
 
     message += "**What to do:**\n"
     message += "1. Click the dropdown below\n"
     message += "2. Select a person's name\n"
     message += "3. Enter how many packages you're sending to THEM\n"
     message += "4. Repeat for anyone else you're sending packages to (optional)\n"
-    message += "5. Click **Done** when finished\n\n"
-    message += '**Example:** If you\'re sending 3 packages to your official rat, select their name and enter "3"\n\n'
-    message += "**Note:** You can send to people other than your official rat if you want! "
-    message += "Just select their name and enter the count."
+    message += "5. Click **✅ Done** when finished\n\n"
+    message += '**Example:** If you\'re sending 3 packages to your official recipient, select their name and enter "3"\n\n'
+    message += "**Sending to multiple people?** That's awesome! 🎉 You can send to people other than your official recipient. "
+    message += "Just select their name from the dropdown and enter the count for each person."
 
     await member.send(message, view=view)
     logger.info(f"Sent package update DM to {member.display_name}")
