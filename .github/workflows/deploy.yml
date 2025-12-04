@@ -55,8 +55,16 @@ jobs:
       # 2. Build and Deploy
       # Note: This requires a 'docker-compose.yml' in your repo root
       - name: Build and Deploy
+        # We inject the secrets directly into the shell here
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          PARTICIPANT_ROLE_ID: ${{ secrets.PARTICIPANT_ROLE_ID }}
+          MANAGER_USER_ID: ${{ secrets.MANAGER_USER_ID }}
+          MESSAGE_COMBINE_WINDOW_SECONDS: 5
         run: |
-          # Pulls base images, builds your code, recreates containers
+          # The variables above are now available to docker compose
           docker compose up -d --build --force-recreate --remove-orphans
 
       # 3. Cleanup to save space on Unraid
