@@ -142,7 +142,7 @@ jobs:
 
   # Sequential: Build Docker after checks pass
   docker-build:
-    name: Docker Build
+    name: Docker Build and Push
     runs-on: ubuntu-latest
     needs: [check-changes, lint, build, test]
     outputs:
