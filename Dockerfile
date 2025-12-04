@@ -1,27 +1,20 @@
-# syntax=docker/dockerfile:1.7
-FROM node:20-slim AS base
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+FROM python:3.11-slim
+
+# Create non-root user for security
+RUN useradd -u 10001 -m appuser
+
 WORKDIR /app
 
-FROM base AS deps
-COPY package.json package-lock.json* .npmrc* ./
-COPY prisma ./prisma
-RUN npm ci || npm install
+# Install dependencies as root
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-FROM base AS build
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run prisma:generate
-RUN npm run build
+# Copy application code and set ownership
+COPY src/ ./src/
+RUN chown -R appuser:appuser /app
 
-FROM base AS run
-ENV NODE_ENV=production
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/prisma ./prisma
-RUN npm prune --omit=dev
+# Switch to non-root user
+USER appuser
 
-VOLUME ["/app/data"]
-CMD ["node", "dist/index.js"]
+CMD ["python", "-m", "src.main"]
 
