@@ -20,19 +20,36 @@ jobs:
       - name: Create .env file
         run: |
           touch .env
-          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
-          echo "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}" >> .env
-          echo "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}" >> .env
-          echo "PARTICIPANT_ROLE_ID=${{ secrets.PARTICIPANT_ROLE_ID }}" >> .env
-          echo "MANAGER_USER_ID=${{ secrets.MANAGER_USER_ID }}" >> .env
-          echo "MESSAGE_COMBINE_WINDOW_SECONDS=5" >> .env  # <--- Added this (hardcoded is fine if not secret)
+          
+          # Function to safely check and write secrets
+          check_secret() {
+            if [ -z "$2" ]; then
+              echo "❌ ERROR: Secret $1 is EMPTY or MISSING!"
+            else
+              echo "✅ $1 is set (length: ${#2})"
+              echo "$1=$2" >> .env
+            fi
+          }
+
+          # 1. Write the secrets (and check them one by one)
+          check_secret "DISCORD_TOKEN" "${{ secrets.DISCORD_TOKEN }}"
+          check_secret "DISCORD_CLIENT_ID" "${{ secrets.DISCORD_CLIENT_ID }}"
+          check_secret "DISCORD_GUILD_ID" "${{ secrets.DISCORD_GUILD_ID }}"
+          check_secret "PARTICIPANT_ROLE_ID" "${{ secrets.PARTICIPANT_ROLE_ID }}"
+          check_secret "MANAGER_USER_ID" "${{ secrets.MANAGER_USER_ID }}"
+          
+          # 2. Write the non-secrets
           echo "REDIS_HOST=redis" >> .env
           echo "REDIS_PORT=6379" >> .env
-          
-          # Simple check to ensure variables aren't empty
-          if grep -q "=$" .env; then
-            echo "Error: One or more secrets are empty!"
-            exit 1
+          echo "MESSAGE_COMBINE_WINDOW_SECONDS=5" >> .env
+
+          # 3. Final Fail-Safe
+          # If the file has fewer lines than variables, fail the build
+          EXPECTED_LINES=8
+          ACTUAL_LINES=$(wc -l < .env)
+          if [ "$ACTUAL_LINES" -lt "$EXPECTED_LINES" ]; then
+             echo "🚨 CRITICAL: .env file is incomplete! Stopping deployment."
+             exit 1
           fi
 
       # 2. Build and Deploy
