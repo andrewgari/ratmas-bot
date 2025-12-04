@@ -1,45 +1,36 @@
 services:
-  ratmas-bot:
-    image: ghcr.io/andrewgari/ratmas-bot:latest
-    container_name: ratmas-bot
+  redis:
+    image: redis:7-alpine
+    container_name: ratmas-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
-    # Environment variables
+  bot:
+    build: .
+    container_name: ratmas-bot
+    depends_on:
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - TZ=${TZ:-UTC}
-      - DATABASE_URL=file:/app/data/ratmas.sqlite
-      # Database path inside container
-      - DATABASE_PATH=/app/data/ratmas.sqlite
-
-    # Volume mappings
-    volumes:
-      # Persistent database storage - bind mount for simplicity
-      - ./data:/app/data
-
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-
-    # Health check
-    healthcheck:
-      test: ['CMD', 'node', '-e', 'process.exit(0)']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-    # Logging configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    restart: unless-stopped
     logging:
-      driver: 'json-file'
+      driver: "json-file"
       options:
-        max-size: '10m'
-        max-file: '3'
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis-data:

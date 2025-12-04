@@ -25,12 +25,12 @@ jobs:
             echo "Error: DISCORD_CLIENT_ID secret is not set"
             exit 1
           fi
-          if [ -z "${{ secrets.RATMAS_ROLE_ID }}" ]; then
-            echo "Error: RATMAS_ROLE_ID secret is not set"
+          if [ -z "${{ secrets.DISCORD_GUILD_ID }}" ]; then
+            echo "Error: DISCORD_GUILD_ID secret is not set"
             exit 1
           fi
-          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
-            echo "Error: DATABASE_URL secret is not set"
+          if [ -z "${{ secrets.RATMAS_ROLE_ID }}" ]; then
+            echo "Error: RATMAS_ROLE_ID secret is not set"
             exit 1
           fi
 
@@ -39,13 +39,12 @@ jobs:
           cat > .env << EOF
           DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
           DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}
           RATMAS_ROLE_ID=${{ secrets.RATMAS_ROLE_ID }}
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          REDIS_HOST=redis
+          REDIS_PORT=6379
           EOF
           chmod 600 .env
-
-      - name: Create data directory
-        run: mkdir -p data
 
       - name: Pull Docker images
         run: docker compose pull
@@ -56,17 +55,16 @@ jobs:
       - name: Start services
         run: docker compose up -d
 
-      - name: Run database migrations
-        run: |
-          echo "Running database migrations..."
-          docker compose exec -T ratmas-bot npm run prisma:migrate:deploy
-
       - name: Clean up old images
         run: docker image prune -f
 
       - name: Check service health
         run: |
-          echo "Waiting for service to be ready..."
+          echo "Waiting for services to be ready..."
           sleep 10
+          echo "Checking Redis health..."
+          docker compose exec redis redis-cli ping
+          echo "Checking container status..."
           docker compose ps
-          docker compose logs --tail=50
+          echo "Recent bot logs:"
+          docker compose logs --tail=50 bot
