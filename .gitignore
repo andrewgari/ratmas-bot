@@ -9,6 +9,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -25,6 +26,13 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
 
 # Docker
 *.log

@@ -1,12 +1,12 @@
 # GitHub Actions workflow for Docker build and push to GHCR
-# - On PR: builds and pushes pr-<number>-<shortsha> and pr-<number>-latest tags
+# - On PR: builds and pushes pr-<number>-<shortsha> tag (NOT required for merge)
 # - On main: builds and pushes latest and sha-<shortsha> tags
+# - On PR merge: re-tags the last PR image as latest
 # - On release: builds and pushes stable and v<semver> tags
 # - Attaches SBOM and provenance
 # - Uses only GITHUB_TOKEN (no PAT)
-# - No deploys or runtime orchestration
 
-name: Build and Push Docker Image to GHCR
+name: Publish Docker Image
 
 on:
   pull_request:
@@ -18,8 +18,11 @@ on:
     types: [published]
 
 jobs:
-  build-and-push:
+  publish:
+    name: Publish to GHCR
     runs-on: ubuntu-latest
+    # Not required for PR merge
+    if: github.event_name == 'pull_request' || github.event_name == 'release'
     permissions:
       contents: read
       packages: write
@@ -27,6 +30,7 @@ jobs:
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,9 +59,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=pr,prefix=pr-,suffix=-${{ steps.sha.outputs.short }},enable=true,priority=100
-            type=ref,event=pr,prefix=pr-,suffix=-latest,enable=true,priority=90
-            type=raw,value=sha-${{ steps.sha.outputs.short }},enable=${{ github.ref == 'refs/heads/main' }},priority=80
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }},priority=70
             type=raw,value=stable,enable=${{ github.event_name == 'release' }},priority=60
             type=semver,pattern=v{{version}},enable=${{ github.event_name == 'release' }},priority=50
           labels: |
@@ -80,6 +81,96 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Show image digest
+      - name: Output image info
         run: |
           echo "Image digest: ${{ steps.buildpush.outputs.digest }}"
+          echo "Image tags: ${{ steps.meta.outputs.tags }}"
+
+  retag-on-merge:
+    name: Re-tag PR Image as Latest
+    runs-on: ubuntu-latest
+    # Only run when PR is merged to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get PR number from merge commit
+        id: pr
+        run: |
+          PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=#)\d+(?=\))' | head -1 || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR number found in merge commit, building fresh image"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "PR number: $PR_NUMBER"
+            echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get latest PR image SHA
+        id: pr_image
+        if: steps.pr.outputs.found == 'true'
+        run: |
+          # Get the last commit from the PR (second parent of merge commit)
+          PR_SHA=$(git rev-parse HEAD^2 2>/dev/null || echo "")
+          if [ -z "$PR_SHA" ]; then
+            echo "Could not find PR commit, will build fresh"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            PR_SHORT_SHA=$(echo $PR_SHA | cut -c1-7)
+            echo "PR SHA: $PR_SHA"
+            echo "PR short SHA: $PR_SHORT_SHA"
+            echo "sha=$PR_SHA" >> $GITHUB_OUTPUT
+            echo "short_sha=$PR_SHORT_SHA" >> $GITHUB_OUTPUT
+            echo "tag=pr-${{ steps.pr.outputs.number }}-$PR_SHORT_SHA" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Re-tag PR image as latest
+        if: steps.pr_image.outputs.found == 'true'
+        run: |
+          SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.pr_image.outputs.tag }}"
+          TARGET_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+          echo "Pulling PR image: $SOURCE_IMAGE"
+          docker pull $SOURCE_IMAGE || {
+            echo "Failed to pull PR image, will build fresh instead"
+            exit 1
+          }
+
+          echo "Re-tagging as: $TARGET_IMAGE"
+          docker tag $SOURCE_IMAGE $TARGET_IMAGE
+
+          echo "Pushing latest tag"
+          docker push $TARGET_IMAGE
+
+          echo "✅ Successfully re-tagged PR image as latest"
+
+      - name: Build and push fresh image
+        if: steps.pr.outputs.found == 'false' || steps.pr_image.outputs.found == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
