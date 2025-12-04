@@ -43,22 +43,129 @@ Required environment variables in `.env`:
 
 Slash commands register to the specified guild on startup.
 
-## Commands
+## How It Works
+
+### For Admins - Running a Gift Exchange
+
+Follow these steps in order to run a successful Ratmas gift exchange:
+
+#### Step 1: Start the Season
+
+Run the command:
+
+```text
+/start-ratmas
+```
+
+This will:
+
+- Initialize a new gift exchange event
+- Clear any previous season data
+- Prepare the bot for participant assignments
+
+#### Step 2: Let Participants Choose Recipients
+
+Run the command:
+
+```text
+/custom-assignments
+```
+
+This will:
+
+- Send a DM to each participant with the participant role
+- Each person selects ONE person to send gifts to (their "official gift recipient")
+- Ensure everyone has at least one sender
+- Allow participants to send to multiple people, but they must have one official recipient
+
+#### Step 3: Collect Package Counts
+
+Run the command:
+
+```text
+/package-update-query
+```
+
+This will:
+
+- Ask everyone how many packages they're sending to each person
+- Help recipients know when all gifts have arrived
+- Allow participants to update counts for their official recipient and anyone else they're sending to
+
+#### Step 4: End the Season
+
+Run the command:
+
+```text
+/end-ratmas
+```
+
+This will:
+
+- Archive all data from this season (unless you use `permanent=True`)
+- Prepare the bot for the next event
+- Save archived data with timestamps for your records
+
+### For Participants
+
+#### Check Your Incoming Packages
+
+Run the command:
+
+```text
+/list-packages
+```
+
+This will:
+
+- Show you how many packages people are sending you
+- Help you know when all your gifts have arrived
+
+#### Update Your Outgoing Packages
+
+Run the command:
+
+```text
+/update-packages
+```
+
+This will:
+
+- Let you tell the bot how many packages you're sending to each person
+- Allow you to send to your official recipient and anyone else you want!
+
+#### Send Anonymous Messages
+
+Just DM the bot directly! Your messages are automatically forwarded:
+
+- **You → Your gift recipient**: "📬 Message from someone receiving your gifts: [message]"
+- **Your gift recipient → You**: They can reply and you'll receive it anonymously
+- Messages are combined if sent within 5 seconds (configurable)
+- Use the **Send Reminder** button if you don't get a response
+- Use the **Report Issue** button if you need help from the manager
+
+## Commands Reference
 
 ### Admin Commands
-- `/start-ratmas` — Start a new gift exchange season
-- `/end-ratmas` — End the current season and archive all data
-- `/custom-assignments` — Send DMs for participants to choose their gift recipients
-- `/package-update-query` — Send DMs asking participants to update package counts
+
+- `/start-ratmas` — **Step 1:** Initialize a new gift exchange season
+- `/custom-assignments` — **Step 2:** Let participants choose who they're sending gifts to
+- `/package-update-query` — **Step 3:** Ask participants how many packages they're sending
+- `/end-ratmas` — **Step 4:** End the season and archive all data
 
 ### Participant Commands
-- `/list-packages` — See how many packages are being sent to you
-- `/update-packages` — Update how many packages you're sending to people
 
-### Anonymous Messaging
-Participants can send anonymous messages by DMing the bot directly. Messages are automatically routed:
-- **Gift giver → receiver**: "📬 Message from someone receiving your gifts: [message]"
-- **Receiver → giver**: "📬 Message from someone sending you gifts: [message]"
+- `/list-packages` — Check how many packages people are sending to you
+- `/update-packages` — Tell us how many packages you're sending to each person
+
+## Glossary
+
+- **Season**: A single gift exchange event from start to finish
+- **Participant**: Anyone with the configured participant role who can join the exchange
+- **Official Gift Recipient**: The ONE person you're assigned to send gifts to (ensures everyone gets at least one sender)
+- **Package Count**: How many physical packages/shipments you're sending to someone
+- **Anonymous Messaging**: Send messages through the bot without revealing your identity
+- **Manager**: The admin user who receives escalations and notifications (configured via `MANAGER_USER_ID`)
 
 ## Runbook
 

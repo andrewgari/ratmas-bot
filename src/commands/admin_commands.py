@@ -17,34 +17,44 @@ logger = logging.getLogger(__name__)
 async def setup_admin_commands(bot, db: "RatmasDB"):
     """Setup admin commands."""
 
-    @bot.tree.command(name="start-ratmas", description="[ADMIN] Start a new gift exchange season")
+    @bot.tree.command(
+        name="start-ratmas", description="[ADMIN] Step 1: Initialize a new gift exchange season"
+    )
     @app_commands.default_permissions(administrator=True)
     async def start_ratmas(interaction: discord.Interaction):
         """Start a new Ratmas season."""
         if db.is_season_active():
             await interaction.response.send_message(
-                "❌ Ratmas is already in progress. Please run `/end-ratmas` first.", ephemeral=True
+                "❌ **A season is already running!**\n\n"
+                "You need to end the current season first with `/end-ratmas` before starting a new one.\n"
+                "This prevents accidentally losing current participant data.",
+                ephemeral=True,
             )
             return
 
         db.start_season()
         await interaction.response.send_message(
             "✅ **Ratmas Season Started!**\n\n"
-            "The season has begun. Use `/custom-assignments` to set up participant assignments.",
+            "The season has begun!\n\n"
+            "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to.",
             ephemeral=True,
         )
         logger.info(f"Ratmas season started by {interaction.user.name}")
 
     @bot.tree.command(
-        name="end-ratmas", description="[ADMIN] End the gift exchange and archive all data"
+        name="end-ratmas", description="[ADMIN] Step 4: End the gift exchange and archive all data"
     )
     @app_commands.default_permissions(administrator=True)
-    @app_commands.describe(permanent="Permanently delete data without archiving")
+    @app_commands.describe(
+        permanent="Permanently delete data without archiving (use with caution!)"
+    )
     async def end_ratmas(interaction: discord.Interaction, permanent: bool = False):
         """End the current Ratmas season."""
         if not db.is_season_active():
             await interaction.response.send_message(
-                "❌ No active Ratmas season to end.", ephemeral=True
+                "❌ **No active season found.**\n\n"
+                "There's no season currently running. Use `/start-ratmas` to begin a new one!",
+                ephemeral=True,
             )
             return
 
@@ -52,23 +62,31 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
         db.end_season(archive=archive)
 
         if archive:
-            message = "✅ **Ratmas Season Ended**\n\nData has been archived."
+            message = (
+                "✅ **Ratmas Season Ended**\n\n"
+                "All data has been safely archived. You can start a new season anytime with `/start-ratmas`!"
+            )
         else:
-            message = "✅ **Ratmas Season Ended**\n\n⚠️ All data has been permanently deleted."
+            message = (
+                "✅ **Ratmas Season Ended**\n\n"
+                "⚠️ All data has been permanently deleted (no archive created)."
+            )
 
         await interaction.response.send_message(message, ephemeral=True)
         logger.info(f"Ratmas season ended by {interaction.user.name} (permanent={permanent})")
 
     @bot.tree.command(
         name="custom-assignments",
-        description="[ADMIN] Send DMs so participants can choose who they're sending gifts to",
+        description="[ADMIN] Step 2: Let participants choose who they're sending gifts to",
     )
     @app_commands.default_permissions(administrator=True)
     async def custom_assignments(interaction: discord.Interaction):
-        """Send DMs to participants to select their rats."""
+        """Send DMs to participants to select their gift recipients."""
         if not db.is_season_active():
             await interaction.response.send_message(
-                "❌ No active Ratmas season. Please run `/start-ratmas` first.", ephemeral=True
+                "❌ **No active season found.**\n\n"
+                "Please run `/start-ratmas` first to initialize a new gift exchange season.",
+                ephemeral=True,
             )
             return
 
@@ -77,7 +95,9 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
         official_assignments = [a for a in assignments if a.get("is_official")]
         if official_assignments:
             await interaction.response.send_message(
-                "❌ Assignments already exist. Please run `/end-ratmas` first to reset.",
+                "❌ **Assignments already exist!**\n\n"
+                "Participants have already chosen their gift recipients. "
+                "If you need to reset, run `/end-ratmas` first to clear the current season.",
                 ephemeral=True,
             )
             return
@@ -90,7 +110,9 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
 
         if not role:
             await interaction.followup.send(
-                "❌ Participant role not found. Please check PARTICIPANT_ROLE_ID in config.",
+                "❌ **Participant role not found!**\n\n"
+                "The configured participant role doesn't exist in this server. "
+                "Please check the PARTICIPANT_ROLE_ID setting in your configuration.",
                 ephemeral=True,
             )
             return
@@ -99,7 +121,10 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
 
         if len(participants) < 2:
             await interaction.followup.send(
-                f"❌ Need at least 2 participants. Found {len(participants)}.", ephemeral=True
+                f"❌ **Not enough participants!**\n\n"
+                f"Found {len(participants)} participant(s), but you need at least 2 people for a gift exchange.\n"
+                f"Make sure users have the participant role assigned.",
+                ephemeral=True,
             )
             return
 
@@ -122,9 +147,10 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
                 failed_users.append(member.display_name)
 
         # Report results
-        message = f"✅ Sent assignment DMs to {success_count}/{len(participants)} participants."
+        message = f"✅ **Assignment DMs sent!**\n\nSuccessfully sent to {success_count}/{len(participants)} participants."
         if failed_users:
-            message += f"\n\n❌ Failed to send to: {', '.join(failed_users)}"
+            message += f"\n\n❌ **Failed to send to:** {', '.join(failed_users)}\n"
+            message += "These users may have DMs disabled. Please ask them to enable DMs from server members."
 
         await interaction.followup.send(message, ephemeral=True)
         logger.info(
@@ -133,14 +159,16 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
 
     @bot.tree.command(
         name="package-update-query",
-        description="[ADMIN] Send DMs asking everyone to update how many packages they're sending",
+        description="[ADMIN] Step 3: Ask participants how many packages they're sending",
     )
     @app_commands.default_permissions(administrator=True)
     async def package_update_query(interaction: discord.Interaction):
         """Send package update DMs to all participants."""
         if not db.is_season_active():
             await interaction.response.send_message(
-                "❌ No active Ratmas season. Please run `/start-ratmas` first.", ephemeral=True
+                "❌ **No active season found.**\n\n"
+                "Please run `/start-ratmas` first to initialize a new gift exchange season.",
+                ephemeral=True,
             )
             return
 
@@ -151,7 +179,9 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
 
         if not users:
             await interaction.followup.send(
-                "❌ No participants found. Run `/custom-assignments` first.", ephemeral=True
+                "❌ **No participants found.**\n\n"
+                "You need to run `/custom-assignments` first so participants can choose their gift recipients.",
+                ephemeral=True,
             )
             return
 
@@ -161,7 +191,11 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
         # Get guild to fetch members
         guild = bot.get_guild(Config.DISCORD_GUILD_ID)
         if not guild:
-            await interaction.followup.send("❌ Could not find guild.", ephemeral=True)
+            await interaction.followup.send(
+                "❌ **Server not found!**\n\n"
+                "Could not find the configured Discord server. Please check your DISCORD_GUILD_ID setting.",
+                ephemeral=True,
+            )
             return
 
         success_count = 0
@@ -179,9 +213,10 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
                 failed_users.append(user_data["display_name"])
 
         # Report results
-        message = f"✅ Sent package update DMs to {success_count}/{len(users)} participants."
+        message = f"✅ **Package update requests sent!**\n\nSuccessfully sent to {success_count}/{len(users)} participants."
         if failed_users:
-            message += f"\n\n❌ Failed to send to: {', '.join(failed_users)}"
+            message += f"\n\n❌ **Failed to send to:** {', '.join(failed_users)}\n"
+            message += "These users may have DMs disabled. Please ask them to enable DMs from server members."
 
         await interaction.followup.send(message, ephemeral=True)
         logger.info(

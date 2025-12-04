@@ -42,7 +42,9 @@ class AssignmentSelect(ui.Select):
         # Check if selected user already has an official sender
         if self.db.has_official_sender(selected_id):
             await interaction.response.send_message(
-                "❌ That person already has a sender. Please pick someone else.", ephemeral=True
+                "❌ **That person already has an official sender.**\n\n"
+                "Please pick someone else so everyone gets at least one gift giver!",
+                ephemeral=True,
             )
             logger.warning(
                 f"User {self.user_id} tried to select {selected_id} who already has a sender"
@@ -66,7 +68,8 @@ class AssignmentSelect(ui.Select):
             f'• You type: "What\'s your favorite color?"\n'
             f'• They receive: "📬 Message from someone receiving your gifts: What\'s your favorite color?"\n\n'
             f"They can reply, and you'll get their response - all completely anonymous!\n\n"
-            f"**Next step:** Wait for a message asking you to update your package counts.",
+            f"**Next step:** Wait for a message asking you to update your package counts. "
+            f"This helps {selected_name} know when all their gifts have arrived!",
             ephemeral=True,
         )
         logger.info(f"Assignment created: {self.user_id} → {selected_id}")
@@ -87,11 +90,14 @@ async def send_assignment_dm(bot, db: "RatmasDB", member: discord.Member):
         "You're participating in the gift exchange!\n\n"
         "**What you need to do:**\n"
         "Choose ONE person from the dropdown below that YOU will send gifts to. "
-        'This is your "official rat" - the person you\'re responsible for.\n\n'
+        'This is your "official gift recipient" - the person you\'re responsible for.\n\n'
+        "**Why just one?** This ensures everyone gets at least one gift sender! "
+        "(You can send to others too, but this is your official recipient.)\n\n"
         "**What happens next:**\n"
         "• You'll send packages to this person\n"
         "• You can message them anonymously through this bot\n"
-        "• They won't know it's you until you reveal yourself!\n\n"
+        "• They won't know it's you until you reveal yourself!\n"
+        "• Later, you'll tell us how many packages you're sending\n\n"
         "**Choose your recipient now:**",
         view=view,
     )

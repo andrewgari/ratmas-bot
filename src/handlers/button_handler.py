@@ -18,7 +18,7 @@ class ReminderButton(ui.Button):
     def __init__(
         self, sender_id: int, receiver_id: int, original_message: str, bot, db: "RatmasDB"
     ):
-        super().__init__(label="🔔 Reminder", style=discord.ButtonStyle.primary)
+        super().__init__(label="🔔 Send Reminder", style=discord.ButtonStyle.primary)
         self.sender_id = sender_id
         self.receiver_id = receiver_id
         self.original_message = original_message
@@ -51,7 +51,9 @@ class ReminderButton(ui.Button):
 
         # Confirm to user
         await interaction.response.send_message(
-            "✅ Reminder sent! The manager has also been notified.", ephemeral=True
+            "✅ **Reminder sent!**\n\n"
+            "Your message has been resent to your gift recipient, and the manager has been notified in case follow-up is needed.",
+            ephemeral=True,
         )
         logger.info(f"Reminder sent from {self.sender_id} to {self.receiver_id}")
 
@@ -112,7 +114,7 @@ class EscalateButton(ui.Button):
     def __init__(
         self, sender_id: int, receiver_id: int, original_message: str, bot, db: "RatmasDB"
     ):
-        super().__init__(label="🚨 Escalate", style=discord.ButtonStyle.danger)
+        super().__init__(label="⚠️ Report Issue", style=discord.ButtonStyle.danger)
         self.sender_id = sender_id
         self.receiver_id = receiver_id
         self.original_message = original_message

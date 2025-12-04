@@ -93,12 +93,21 @@ class DMHandler:
 
             # Send anonymous message
             await receiver.send(
-                f"📬 **Message from someone receiving your gifts:**\n\n{combined_text}", view=view
+                f"📬 **Message from someone receiving your gifts:**\n\n{combined_text}\n\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"💡 **Need help?**\n"
+                f"• **Send Reminder** - Resend this message to your gift giver\n"
+                f"• **Report Issue** - Contact the manager about a problem",
+                view=view,
             )
 
             # Confirm to sender
             sender = await self.bot.fetch_user(sender_id)
-            await sender.send("✅ Your message has been delivered anonymously to your rat!")
+            await sender.send(
+                "✅ **Message delivered!**\n\n"
+                "Your message has been sent anonymously to your gift recipient. "
+                "They can reply to you through this bot, and you'll receive their response here!"
+            )
 
             logger.info(f"Relayed message from {sender_id} to {receiver_id}")
 
