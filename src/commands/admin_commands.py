@@ -19,6 +19,10 @@ async def post_guide_embeds(channel):
 
     Args:
         channel: Discord channel to post to
+
+    Raises:
+        discord.Forbidden: If bot lacks permissions to send messages
+        discord.HTTPException: If Discord API request fails
     """
     # Welcome header
     embed1 = discord.Embed(
@@ -191,14 +195,31 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
 
         # Post guide to the channel
         channel = interaction.channel
-        await post_guide_embeds(channel)
+        try:
+            await post_guide_embeds(channel)
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "The season has begun and the guide has been posted to this channel!\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
+        except discord.Forbidden:
+            logger.error(f"Failed to post guide in {channel.name}: Missing send permissions")
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "⚠️ However, I couldn't post the guide (missing send permissions). "
+                "Please use `/post-guide` in a channel where I have permissions.\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
+        except discord.HTTPException as e:
+            logger.error(f"Failed to post guide during season start: {e}")
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "⚠️ However, the guide failed to post due to an error. "
+                "Please use `/post-guide` to post it manually.\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
 
-        await interaction.followup.send(
-            "✅ **Ratmas Season Started!**\n\n"
-            "The season has begun and the guide has been posted to this channel!\n\n"
-            "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to.",
-            ephemeral=True,
-        )
+        await interaction.followup.send(message, ephemeral=True)
         logger.info(f"Ratmas season started by {interaction.user.name}")
 
     @bot.tree.command(
