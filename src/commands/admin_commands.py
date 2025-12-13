@@ -14,8 +14,165 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+async def post_guide_embeds(channel):
+    """Post the Ratmas guide embeds to a channel.
+
+    Args:
+        channel: Discord channel to post to
+
+    Raises:
+        discord.Forbidden: If bot lacks permissions to send messages
+        discord.HTTPException: If Discord API request fails
+    """
+    # Welcome header
+    embed1 = discord.Embed(
+        title="🎁 Welcome to Ratmas!",
+        description="Your complete guide to this year's Secret Santa gift exchange. Read through each section to understand how everything works!",
+        color=0xE74C3C,  # Red
+    )
+    embed1.set_footer(text="Happy Ratmas! 🐀🎄")
+    await channel.send(embed=embed1)
+
+    # Communication section
+    embed2 = discord.Embed(
+        title="📱 How Communication Works",
+        description="All communication happens through me (the bot) to keep everything anonymous!",
+        color=0x3498DB,  # Blue
+    )
+    embed2.add_field(
+        name="Step 1: Receive Your Assignment",
+        value="I'll send you a DM asking you to choose who you're sending gifts to. This person is your **official recipient**.",
+        inline=False,
+    )
+    embed2.add_field(
+        name="Step 2: Message Anonymously",
+        value='Want to ask your recipient what they like? Just **send a DM to me** and I\'ll forward it anonymously!\n\n**Example:**\n• You DM me: "What\'s your favorite color?"\n• They receive: "📬 Message from your gift sender: What\'s your favorite color?"\n• They reply to me → You get their response!',
+        inline=False,
+    )
+    embed2.add_field(
+        name="⚠️ Stay Anonymous!",
+        value="**Only** send messages through this bot. Don't message your recipient directly in the server or you'll spoil the surprise!",
+        inline=False,
+    )
+    await channel.send(embed=embed2)
+
+    # Commands section
+    embed3 = discord.Embed(
+        title="🛠️ Commands You Can Use",
+        color=0xF1C40F,  # Yellow
+    )
+    embed3.add_field(
+        name="/list-packages",
+        value="**Check how many gifts are coming to you**\n\n• Shows total packages people reported sending to you\n• Helps you know when all gifts have arrived\n• Updates as people report their package counts",
+        inline=False,
+    )
+    embed3.add_field(
+        name="/update-packages",
+        value="**Report how many packages you're sending**\n\n• Opens a DM with a dropdown menu\n• Select each person you're sending to\n• Enter the number of packages for each\n• Can send to multiple people (not just your official recipient!)",
+        inline=False,
+    )
+    await channel.send(embed=embed3)
+
+    # Timeline section
+    embed4 = discord.Embed(
+        title="📅 Event Timeline - What to Expect",
+        color=0x9B59B6,  # Purple
+    )
+    embed4.add_field(
+        name="Phase 1: Assignment 📋",
+        value="✅ Check your DMs for my message\n✅ Choose ONE person as your official recipient\n✅ This ensures everyone gets at least one sender!",
+        inline=False,
+    )
+    embed4.add_field(
+        name="Phase 2: Anonymous Chat 💬",
+        value="✅ DM me to send anonymous messages to your recipient\n✅ Ask about their interests, hobbies, wishlists\n✅ They can reply through me - stays anonymous!",
+        inline=False,
+    )
+    embed4.add_field(
+        name="Phase 3: Gift Sending 📦",
+        value="✅ Buy and send your gifts\n✅ Use `/update-packages` to report counts\n✅ Update for everyone you're sending to",
+        inline=False,
+    )
+    embed4.add_field(
+        name="Phase 4: Tracking 📊",
+        value="✅ Use `/list-packages` to check incoming gifts\n✅ Know when everything has arrived!",
+        inline=False,
+    )
+    embed4.add_field(
+        name="Phase 5: Reveal Day 🎉",
+        value="✅ Identities revealed!\n✅ Find out who your Secret Santa was!",
+        inline=False,
+    )
+    await channel.send(embed=embed4)
+
+    # FAQ section
+    embed5 = discord.Embed(
+        title="❓ Frequently Asked Questions",
+        color=0x2ECC71,  # Green
+    )
+    embed5.add_field(
+        name="Can I send gifts to multiple people?",
+        value="**Yes!** You have one official recipient (required), but you can send extras to anyone. Just update package counts for each person.",
+        inline=False,
+    )
+    embed5.add_field(
+        name="How do I stay anonymous?",
+        value="**Only communicate through this bot.** Never message your recipient directly in the server or through regular DMs.",
+        inline=False,
+    )
+    embed5.add_field(
+        name="How do I ask my recipient something?",
+        value="Send a DM to me (Ratmas Bot) with your question. I'll forward it anonymously and send you their reply!",
+        inline=False,
+    )
+    embed5.add_field(
+        name="When do I update package counts?",
+        value="You'll get a DM reminder, but you can use `/update-packages` anytime.",
+        inline=False,
+    )
+    embed5.add_field(
+        name="Why do package counts matter?",
+        value="So your recipient knows when all gifts have arrived! They use `/list-packages` to see the total expected.",
+        inline=False,
+    )
+    await channel.send(embed=embed5)
+
+    # Checklist section
+    embed6 = discord.Embed(
+        title="🎯 Quick Checklist",
+        description="Your simple step-by-step guide:",
+        color=0x1ABC9C,  # Teal
+    )
+    embed6.add_field(
+        name="What You Need to Do",
+        value="✅ Wait for assignment DM and choose your recipient\n✅ DM the bot to chat anonymously\n✅ Buy and send your gifts\n✅ Use `/update-packages` to report how many sent\n✅ Use `/list-packages` to see gifts coming to you\n✅ Keep everything secret until reveal day!",
+        inline=False,
+    )
+    embed6.add_field(
+        name="Need Help?",
+        value="Ask an admin or use the buttons in your DM messages to report issues.",
+        inline=False,
+    )
+    embed6.set_footer(text="Happy Ratmas! 🐀🎄")
+    await channel.send(embed=embed6)
+
+
 async def setup_admin_commands(bot, db: "RatmasDB"):
     """Setup admin commands."""
+
+    @bot.tree.command(
+        name="post-guide", description="[ADMIN] Post the Ratmas guide to the current channel"
+    )
+    @app_commands.default_permissions(administrator=True)
+    async def post_guide(interaction: discord.Interaction):
+        """Post the complete Ratmas guide as embeds."""
+        await interaction.response.defer(ephemeral=True)
+
+        channel = interaction.channel
+        await post_guide_embeds(channel)
+
+        await interaction.followup.send("✅ Guide posted to channel!", ephemeral=True)
+        logger.info(f"Guide posted by {interaction.user.name} to {channel.name}")
 
     @bot.tree.command(
         name="start-ratmas", description="[ADMIN] Step 1: Initialize a new gift exchange season"
@@ -32,13 +189,37 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
             )
             return
 
+        await interaction.response.defer(ephemeral=True)
+
         db.start_season()
-        await interaction.response.send_message(
-            "✅ **Ratmas Season Started!**\n\n"
-            "The season has begun!\n\n"
-            "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to.",
-            ephemeral=True,
-        )
+
+        # Post guide to the channel
+        channel = interaction.channel
+        try:
+            await post_guide_embeds(channel)
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "The season has begun and the guide has been posted to this channel!\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
+        except discord.Forbidden:
+            logger.error(f"Failed to post guide in {channel.name}: Missing send permissions")
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "⚠️ However, I couldn't post the guide (missing send permissions). "
+                "Please use `/post-guide` in a channel where I have permissions.\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
+        except discord.HTTPException as e:
+            logger.error(f"Failed to post guide during season start: {e}")
+            message = (
+                "✅ **Ratmas Season Started!**\n\n"
+                "⚠️ However, the guide failed to post due to an error. "
+                "Please use `/post-guide` to post it manually.\n\n"
+                "**Next step:** Use `/custom-assignments` to let participants choose who they're sending gifts to."
+            )
+
+        await interaction.followup.send(message, ephemeral=True)
         logger.info(f"Ratmas season started by {interaction.user.name}")
 
     @bot.tree.command(
