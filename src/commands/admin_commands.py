@@ -42,7 +42,7 @@ async def post_guide_embeds(channel):
     )
     embed2.add_field(
         name="Step 2: Message Anonymously",
-        value="Want to ask your recipient what they like? Just **send a DM to me** and I'll forward it anonymously!\n\n**Example:**\n• You DM me: \"What's your favorite color?\"\n• They receive: \"📬 Message from your gift sender: What's your favorite color?\"\n• They reply to me → You get their response!",
+        value='Want to ask your recipient what they like? Just **send a DM to me** and I\'ll forward it anonymously!\n\n**Example:**\n• You DM me: "What\'s your favorite color?"\n• They receive: "📬 Message from your gift sender: What\'s your favorite color?"\n• They reply to me → You get their response!',
         inline=False,
     )
     embed2.add_field(
