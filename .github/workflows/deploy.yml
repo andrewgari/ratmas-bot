@@ -52,7 +52,13 @@ jobs:
              exit 1
           fi
 
-      # 2. Build and Deploy
+      # 2. Create Redis data directory
+      - name: Create Redis data directory
+        run: |
+          mkdir -p /mnt/user/appdata/ratmas-bot/redis
+          echo "✅ Redis data directory created/verified"
+
+      # 3. Build and Deploy
       # Note: This requires a 'docker-compose.yml' in your repo root
       - name: Build and Deploy
         # We inject the secrets directly into the shell here
@@ -67,11 +73,11 @@ jobs:
           # The variables above are now available to docker compose
           docker compose up -d --build --force-recreate --remove-orphans
 
-      # 3. Cleanup to save space on Unraid
+      # 4. Cleanup to save space on Unraid
       - name: Prune old images
         run: docker image prune -f
 
-      # 4. Health Check
+      # 5. Health Check
       - name: Health Check
         run: |
           echo "Waiting for bot to stabilize..."
