@@ -403,3 +403,85 @@ async def setup_admin_commands(bot, db: "RatmasDB"):
         logger.info(
             f"Package update query initiated by {interaction.user.name}: {success_count} sent"
         )
+
+    @bot.tree.command(
+        name="reset-assignment",
+        description="[ADMIN] Reset a user's rat assignment (debug/fix option)",
+    )
+    @app_commands.describe(user="The user whose assignment to reset")
+    @app_commands.default_permissions(administrator=True)
+    async def reset_assignment(interaction: discord.Interaction, user: discord.Member):
+        """Reset a user's official rat assignment."""
+        await interaction.response.defer(ephemeral=True)
+
+        # Check if season is active
+        if not db.is_season_active():
+            await interaction.followup.send(
+                "❌ **No active season!**\n\nStart a season with `/start-ratmas` first.",
+                ephemeral=True,
+            )
+            return
+
+        # Check if user is a participant
+        user_data = db.get_user(user.id)
+        if not user_data:
+            await interaction.followup.send(
+                f"❌ **{user.display_name} is not a participant!**\n\n"
+                "They need to have the participant role to be in the exchange.",
+                ephemeral=True,
+            )
+            return
+
+        # Reset the assignment
+        reset_info = db.reset_user_assignment(user.id)
+
+        if not reset_info:
+            await interaction.followup.send(
+                f"❌ **{user.display_name} has no official assignment to reset.**\n\n"
+                "They either haven't selected a rat yet, or their assignment was already reset.",
+                ephemeral=True,
+            )
+            return
+
+        # Get receiver info
+        receiver_data = db.get_user(reset_info["receiver_id"])
+        receiver_name = receiver_data["display_name"] if receiver_data else "Unknown"
+        packages_count = reset_info["packages_count"]
+
+        # Build message
+        message = f"✅ **Assignment reset for {user.display_name}**\n\n"
+        message += f"Previous assignment: **{receiver_name}**\n"
+
+        if packages_count > 0:
+            message += f"Package count ({packages_count}) preserved as rogue assignment.\n\n"
+        else:
+            message += "No packages were recorded.\n\n"
+
+        message += (
+            f"**Next steps:**\n"
+            f"1. {user.mention} will need to reselect their rat using `/custom-assignments`\n"
+            f"2. Or you can notify them manually to check their DMs for the assignment selector"
+        )
+
+        await interaction.followup.send(message, ephemeral=True)
+        logger.info(
+            f"Assignment reset for {user.display_name} (was sending to {receiver_name}) by {interaction.user.name}"
+        )
+
+        # Notify the user and send new assignment selector
+        try:
+            # Send assignment selector DM
+            from ..handlers.assignment_handler import send_assignment_dm
+
+            await send_assignment_dm(bot, db, user)
+
+            await interaction.channel.send(
+                f"✅ Sent new assignment selector to {user.mention}", delete_after=10
+            )
+        except Exception as e:
+            logger.error(f"Failed to send new assignment selector to {user.display_name}: {e}")
+            await interaction.channel.send(
+                f"⚠️ Failed to send new assignment selector to {user.mention}. "
+                "You may need to run `/custom-assignments` again.",
+                delete_after=15,
+            )

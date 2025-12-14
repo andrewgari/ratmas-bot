@@ -195,3 +195,33 @@ class RatmasDB:
                 total += assignment.get("packages_count", 0)
 
         return total
+
+    # Assignment Reset
+
+    def reset_user_assignment(self, user_id: int) -> Optional[Dict]:
+        """Reset a user's official assignment, preserving package counts as rogue.
+
+        Args:
+            user_id: User whose assignment to reset
+
+        Returns:
+            Info about the reset assignment, or None if no assignment found
+        """
+        # Get user's official assignment
+        assignment = self.get_official_assignment(user_id)
+        if not assignment:
+            return None
+
+        receiver_id = assignment["receiver_id"]
+        packages_count = assignment.get("packages_count", 0)
+
+        # Remove the official assignment
+        self.remove_assignment(user_id, receiver_id)
+
+        # If there were packages, preserve as non-official (rogue) assignment
+        if packages_count > 0:
+            self.add_assignment(
+                user_id, receiver_id, is_official=False, packages_count=packages_count
+            )
+
+        return {"receiver_id": receiver_id, "packages_count": packages_count}
