@@ -8,6 +8,7 @@ from discord import app_commands
 
 from .config import Config
 from .database import RatmasDB
+from .handlers.conversation_handler import ConversationHandler
 from .handlers.dm_handler import DMHandler
 
 # Setup logging
@@ -33,7 +34,8 @@ class RatmasBot(discord.Client):
         self.config = Config
         self.tree = app_commands.CommandTree(self)
         self.db = RatmasDB()
-        self.dm_handler = DMHandler(self, self.db)
+        self.conversation_handler = ConversationHandler(self.db)
+        self.dm_handler = DMHandler(self, self.db, self.conversation_handler)
 
     async def setup_hook(self):
         """Setup hook called when bot starts."""
