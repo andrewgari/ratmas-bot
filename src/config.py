@@ -28,6 +28,7 @@ class Config:
 
     # Bot Configuration
     MESSAGE_COMBINE_WINDOW_SECONDS = int(os.getenv("MESSAGE_COMBINE_WINDOW_SECONDS", 5))
+    CONVERSATION_CONTEXT_TIMEOUT_HOURS = int(os.getenv("CONVERSATION_CONTEXT_TIMEOUT_HOURS", 24))
 
     @classmethod
     def validate(cls):

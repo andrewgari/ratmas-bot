@@ -9,6 +9,7 @@ import discord
 
 if TYPE_CHECKING:
     from ..database import RatmasDB
+    from .conversation_handler import ConversationHandler
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +17,11 @@ logger = logging.getLogger(__name__)
 class DMHandler:
     """Handle DM relay system with message combining."""
 
-    def __init__(self, bot, db: "RatmasDB"):
+    def __init__(self, bot, db: "RatmasDB", conv_handler: "ConversationHandler"):
         """Initialize DM handler."""
         self.bot = bot
         self.db = db
+        self.conv_handler = conv_handler
         # Track pending messages for combining: {user_id: [(message, timestamp), ...]}
         self.pending_messages: Dict[int, List[tuple]] = {}
         # Track active relay tasks
@@ -67,49 +69,87 @@ class DMHandler:
         # Clear pending messages
         self.pending_messages[sender_id] = []
 
-        # Get receiver (the sender's official rat)
-        assignment = self.db.get_official_assignment(sender_id)
-        if not assignment:
-            # No official assignment, can't relay
-            logger.warning(f"User {sender_id} tried to send DM but has no official assignment")
+        # Determine destination using conversation context
+        context = self.db.get_conversation_context(sender_id)
+        destination_id = None
+        is_reply = False
+
+        if context and context.get("mode") == "sender":
+            # User is replying to their sender
+            destination_id = context.get("last_received_from")
+            is_reply = True
+            if not destination_id:
+                # Fallback to official recipient if no sender context
+                destination_id = self._get_official_destination(sender_id)
+                is_reply = False
+        else:
+            # Default: send to official recipient
+            destination_id = self._get_official_destination(sender_id)
+
+        if not destination_id:
             return
 
-        receiver_id = assignment["receiver_id"]
+        # Send message
+        await self._forward_message(sender_id, destination_id, combined_text, is_reply)
 
-        # Send to receiver
+    def _get_official_destination(self, user_id: int) -> int:
+        """Get the official recipient for a user."""
+        assignment = self.db.get_official_assignment(user_id)
+        if not assignment:
+            # No official assignment, can't relay
+            logger.warning(f"User {user_id} tried to send DM but has no official assignment")
+            return None
+        return assignment["receiver_id"]
+
+    async def _forward_message(
+        self, sender_id: int, receiver_id: int, text: str, is_reply: bool = False
+    ):
+        """Forward a message with appropriate buttons."""
         try:
             receiver = await self.bot.fetch_user(receiver_id)
 
-            # Create view with Reminder and Escalate buttons
-            from .button_handler import create_message_buttons
+            # Create view with all message buttons
+            from .button_handler import create_message_view
 
-            view = create_message_buttons(
+            view = create_message_view(
                 sender_id=sender_id,
                 receiver_id=receiver_id,
-                original_message=combined_text,
+                original_message=text,
                 bot=self.bot,
                 db=self.db,
+                conv_handler=self.conv_handler,
             )
+
+            # Determine message header
+            if is_reply:
+                header = "📬 **Reply from someone receiving your gifts:**"
+            else:
+                header = "📬 **Message from someone receiving your gifts:**"
 
             # Send anonymous message
             await receiver.send(
-                f"📬 **Message from someone receiving your gifts:**\n\n{combined_text}\n\n"
+                f"{header}\n\n{text}\n\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"💡 **Need help?**\n"
+                f"💡 **Quick actions:**\n"
+                f"• **Reply to Sender** - Respond to this message\n"
+                f"• **Message My Recipient** - Send to your official recipient\n"
                 f"• **Send Reminder** - Resend this message to your gift giver\n"
-                f"• **Report Issue** - Contact the manager about a problem",
+                f"• **Report Issue** - Contact the manager",
                 view=view,
             )
+
+            # Update conversation context
+            self.conv_handler.record_message_sent(sender_id, receiver_id)
+            self.conv_handler.record_message_received(receiver_id, sender_id)
 
             # Confirm to sender
             sender = await self.bot.fetch_user(sender_id)
             await sender.send(
                 "✅ **Message delivered!**\n\n"
-                "Your message has been sent anonymously to your gift recipient. "
-                "They can reply to you through this bot, and you'll receive their response here!"
+                "Your message has been sent. They can reply using the button in their message!"
             )
 
-            logger.info(f"Relayed message from {sender_id} to {receiver_id}")
+            logger.info(f"Relayed message from {sender_id} to {receiver_id} (reply={is_reply})")
 
         except discord.Forbidden:
             # Receiver has DMs disabled

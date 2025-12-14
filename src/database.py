@@ -195,3 +195,25 @@ class RatmasDB:
                 total += assignment.get("packages_count", 0)
 
         return total
+
+    def get_official_senders(self, receiver_id: int) -> List[Dict]:
+        """Get all users who have receiver_id as their official recipient."""
+        assignments = self.get_all_assignments()
+        return [a for a in assignments if a["receiver_id"] == receiver_id and a.get("is_official")]
+
+    # Conversation Context Management
+
+    def get_conversation_context(self, user_id: int) -> Optional[Dict]:
+        """Get conversation context for a user."""
+        data = self.redis.get(f"ratmas:conversation:{user_id}")
+        return json.loads(data) if data else None
+
+    def set_conversation_context(self, user_id: int, context: Dict):
+        """Set conversation context with 24hr expiration."""
+        key = f"ratmas:conversation:{user_id}"
+        # 86400 seconds = 24 hours
+        self.redis.setex(key, 86400, json.dumps(context))
+
+    def clear_conversation_context(self, user_id: int):
+        """Clear conversation context for a user."""
+        self.redis.delete(f"ratmas:conversation:{user_id}")
